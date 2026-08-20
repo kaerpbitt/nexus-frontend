@@ -7,155 +7,259 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        body { background-color: #0b0f19; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans h-screen flex flex-col overflow-hidden" style="background-color: #020617;">
+<body class="h-screen w-screen flex flex-col overflow-hidden select-none">
 
-    <!-- Header Navigation -->
-    <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 shrink-0">
-        <div class="flex items-center space-x-4">
-            <span class="font-bold text-lg tracking-wider text-blue-500">NEXUS<span class="text-white">PRO</span></span>
+    <!-- ==================== VIEW 1: AUTHENTICATION & OTP GATE ==================== -->
+    <div id="view-auth" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]">
+        <div class="w-full max-w-md bg-slate-900/90 border border-slate-800 backdrop-blur-xl rounded-2xl p-6 shadow-2xl relative">
             
-            <button onclick="openSearchModal()" class="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition">
-                <span id="current-symbol-display" class="font-bold text-yellow-400">BTC/USD</span>
-                <span id="current-name-display" class="text-xs text-slate-400">Bitcoin</span>
-            </button>
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-extrabold tracking-wider text-blue-500">NEXUS<span class="text-white">PRO</span></h1>
+                <p class="text-xs text-slate-400 mt-1">Institutional Grade Multi-Asset Trading Platform</p>
+            </div>
 
-            <div class="hidden md:flex items-center space-x-6 text-sm">
+            <!-- Tab Switcher -->
+            <div id="auth-tabs" class="flex border-b border-slate-800 mb-6 text-sm font-semibold">
+                <button id="tab-btn-login" onclick="switchAuthMode('LOGIN')" class="flex-1 pb-3 text-blue-500 border-b-2 border-blue-500 transition">เข้าสู่ระบบ</button>
+                <button id="tab-btn-register" onclick="switchAuthMode('REGISTER')" class="flex-1 pb-3 text-slate-400 transition">ลงทะเบียน</button>
+            </div>
+
+            <!-- Form LOGIN / REGISTER -->
+            <form id="form-auth" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div id="input-group-name" class="hidden">
+                    <label class="block text-xs text-slate-400 mb-1">ชื่อ-นามสกุลจริง (ตามเอกสารยืนยันตัวตน)</label>
+                    <input type="text" id="auth-fullname" placeholder="John Doe" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 text-white">
+                </div>
+
                 <div>
-                    <span class="text-xs text-slate-500 block">ราคา Real-time</span>
-                    <span id="live-price" class="font-mono font-bold text-emerald-400">$65,000.00</span>
+                    <label class="block text-xs text-slate-400 mb-1">อีเมลผู้ใช้งาน</label>
+                    <input type="email" id="auth-email" required placeholder="name@company.com" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 text-white">
                 </div>
-            </div>
-        </div>
 
-        <div class="flex items-center space-x-4">
-            <div id="account-info" class="hidden flex items-center space-x-3">
-                <div class="text-right">
-                    <span id="user-display-name" class="text-xs text-slate-300 block font-bold">User</span>
-                    <span id="user-balance" class="font-mono font-bold text-blue-400">$0.00</span>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">รหัสผ่าน</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 text-white">
                 </div>
-                <button onclick="logout()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs px-3 py-1.5 rounded border border-rose-500/30 transition">ออกจากระบบ</button>
-            </div>
-            <button id="btn-auth-open" onclick="openAuthModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition">เข้าสู่ระบบ / สมัครสมาชิก</button>
-        </div>
-    </header>
 
-    <!-- Trading Dashboard -->
-    <div class="flex-1 flex overflow-hidden">
-        <main class="flex-1 relative overflow-hidden" style="background-color: #020617;">
-            <div id="chart-container" class="w-full h-full" style="background-color: #020617;"></div>
-        </main>
+                <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-bold rounded-lg text-white shadow-lg shadow-blue-600/30 transition text-sm">เข้าสู่ระบบความปลอดภัย</button>
+            </form>
 
-        <aside class="w-80 bg-slate-900 border-l border-slate-800 flex flex-col shrink-0">
-            <div class="p-4 border-b border-slate-800">
-                <div class="flex space-x-2 mb-4">
-                    <button id="btn-side-buy" onclick="setSide('BUY')" class="flex-1 py-2 rounded font-bold bg-emerald-600 text-white">Buy / Long</button>
-                    <button id="btn-side-sell" onclick="setSide('SELL')" class="flex-1 py-2 rounded font-bold bg-slate-800 text-slate-400">Sell / Short</button>
-                </div>
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-xs text-slate-400 block mb-1">จำนวนเงิน ($)</label>
-                        <input type="number" id="order-amount" value="100" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white font-mono">
+            <!-- Form OTP VERIFICATION -->
+            <form id="form-otp" onsubmit="handleOtpSubmit(event)" class="space-y-4 hidden text-center">
+                <div class="py-2">
+                    <div class="inline-flex p-3 rounded-full bg-blue-500/10 text-blue-400 mb-2">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     </div>
+                    <h3 class="text-base font-bold text-white">ยืนยันรหัสความปลอดภัย OTP</h3>
+                    <p class="text-xs text-slate-400 mt-1">รหัสยืนยันตัวตนถูกส่งไปยังอีเมลของคุณแล้ว</p>
+                </div>
+
+                <div class="flex justify-center space-x-2 my-4">
+                    <input type="text" maxlength="6" id="otp-code" placeholder="123456" class="w-48 text-center tracking-[0.5em] font-mono text-xl font-bold bg-slate-950 border border-blue-500 rounded-lg py-2.5 text-white focus:outline-none">
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-lg text-white shadow-lg shadow-emerald-600/30 transition text-sm">ยืนยันตัวตนและเข้าสู่ระบบ</button>
+            </form>
+
+            <div class="mt-6 pt-4 border-t border-slate-800/80 text-center text-[11px] text-slate-500">
+                Protected by 256-Bit SSL Encryption & Multi-Factor Auth
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== VIEW 2: MAIN TRADING DASHBOARD ==================== -->
+    <div id="view-app" class="h-full w-full flex flex-col hidden">
+        
+        <!-- Top Navigation Bar -->
+        <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-3 md:px-5 shrink-0">
+            <div class="flex items-center space-x-3 md:space-x-6">
+                <span class="font-extrabold text-lg tracking-wider text-blue-500">NEXUS<span class="text-white">PRO</span></span>
+                
+                <!-- Market Selector Button -->
+                <button onclick="openSearchModal()" class="flex items-center space-x-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 px-3 py-1.5 rounded-lg transition">
+                    <span id="current-symbol-display" class="font-bold text-yellow-400 text-xs md:text-sm">BTC/USD</span>
+                    <span id="current-name-display" class="text-[10px] md:text-xs text-slate-400 hidden sm:inline">Bitcoin</span>
+                    <span class="text-xs text-slate-500">▼</span>
+                </button>
+
+                <!-- Asset Price Banner -->
+                <div class="hidden sm:flex flex-col">
+                    <span class="text-[10px] text-slate-500">ราคาตลาด REAL-TIME</span>
+                    <span id="live-price" class="font-mono font-bold text-emerald-400 text-sm">$65,000.00</span>
+                </div>
+            </div>
+
+            <!-- Account Type & User Profile -->
+            <div class="flex items-center space-x-2 md:space-x-4">
+                
+                <!-- Demo / Real Switcher Tab -->
+                <div class="flex bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-bold">
+                    <button id="btn-acc-demo" onclick="switchAccountType('DEMO')" class="px-2.5 py-1 rounded-md bg-blue-600 text-white transition">DEMO</button>
+                    <button id="btn-acc-real" onclick="switchAccountType('REAL')" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">REAL</button>
+                </div>
+
+                <!-- Balance Display -->
+                <div class="text-right">
+                    <span id="account-type-label" class="text-[10px] text-slate-400 font-semibold block">บัญชีทดลอง (Demo)</span>
+                    <span id="user-balance" class="font-mono font-extrabold text-emerald-400 text-sm">$100,000.00</span>
+                </div>
+
+                <!-- Deposit / Withdraw Trigger (Only for Real Account) -->
+                <div id="real-actions" class="hidden flex space-x-1">
+                    <button onclick="openWalletModal('DEPOSIT')" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs px-2 py-1.5 rounded font-bold transition">ฝาก</button>
+                    <button onclick="openWalletModal('WITHDRAW')" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs px-2 py-1.5 rounded font-bold transition">ถอน</button>
+                </div>
+
+                <button onclick="logout()" class="p-1.5 text-slate-400 hover:text-rose-400 transition" title="ออกจากระบบ">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body Workspace -->
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+            
+            <!-- Chart Container -->
+            <main class="flex-1 relative bg-[#090d16] overflow-hidden min-h-[300px]">
+                <div id="chart-container" class="w-full h-full"></div>
+            </main>
+
+            <!-- Order Control Sidebar -->
+            <aside class="w-full md:w-80 bg-slate-900 border-t md:border-t-0 md:border-l border-slate-800 flex flex-col shrink-0">
+                <div class="p-4 border-b border-slate-800 space-y-3">
+                    
+                    <!-- Side Selection -->
+                    <div class="flex space-x-2">
+                        <button id="btn-side-buy" onclick="setSide('BUY')" class="flex-1 py-2.5 rounded-lg font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition">Buy / Long</button>
+                        <button id="btn-side-sell" onclick="setSide('SELL')" class="flex-1 py-2.5 rounded-lg font-bold bg-slate-800 text-slate-400 transition">Sell / Short</button>
+                    </div>
+
                     <div>
-                        <label class="text-xs text-slate-400 block mb-1">Leverage</label>
-                        <select id="order-leverage" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white font-mono">
-                            <option value="1">1x</option>
+                        <div class="flex justify-between text-xs text-slate-400 mb-1">
+                            <span>จำนวนเงินลงทุน ($)</span>
+                            <span id="demo-notice" class="text-blue-400 text-[10px]"> Demo Initial $100k Fixed</span>
+                        </div>
+                        <input type="number" id="order-amount" value="1000" min="10" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500 text-sm">
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">อัตราคูณ Leverage</label>
+                        <select id="order-leverage" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-blue-500 text-sm">
+                            <option value="1">1x (Spot)</option>
                             <option value="10">10x</option>
                             <option value="20">20x</option>
                             <option value="50">50x</option>
-                            <option value="100">100x</option>
+                            <option value="100">100x (High Risk)</option>
                         </select>
                     </div>
-                    <button onclick="executeTrade()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-bold rounded text-white transition mt-2">ส่งคำสั่งซื้อขาย</button>
-                </div>
-            </div>
 
-            <div class="flex-1 flex flex-col overflow-hidden">
-                <div class="p-2 bg-slate-950 text-xs font-bold text-slate-400 border-b border-slate-800">ออเดอร์ในระบบ (Verified on Server)</div>
-                <div id="positions-list" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
-            </div>
-        </aside>
-    </div>
+                    <button onclick="executeTrade()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-bold rounded-lg text-white shadow-lg shadow-blue-600/30 transition text-sm">ส่งคำสั่งซื้อขายทันที</button>
+                </div>
 
-    <!-- Modal Login / Register -->
-    <div id="auth-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 relative">
-            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">&times;</button>
-            <div class="flex space-x-4 border-b border-slate-800 mb-6">
-                <button id="tab-login" onclick="switchAuthTab('LOGIN')" class="pb-2 font-bold text-blue-500 border-b-2 border-blue-500">เข้าสู่ระบบ</button>
-                <button id="tab-register" onclick="switchAuthTab('REGISTER')" class="pb-2 font-bold text-slate-400">สมัครสมาชิก</button>
-            </div>
-
-            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
-                <div id="field-fullname" class="hidden">
-                    <label class="text-xs text-slate-400 block mb-1">ชื่อ-นามสกุล</label>
-                    <input type="text" id="auth-fullname" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                <!-- Position List -->
+                <div class="flex-1 flex flex-col overflow-hidden">
+                    <div class="px-4 py-2 bg-slate-950 text-[11px] font-bold text-slate-400 border-b border-slate-800 flex justify-between items-center">
+                        <span>รายการสถานะเปิดค้าง (Active Orders)</span>
+                        <span id="pos-count" class="bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded text-[10px]">0</span>
+                    </div>
+                    <div id="positions-list" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
                 </div>
-                <div>
-                    <label class="text-xs text-slate-400 block mb-1">อีเมล</label>
-                    <input type="email" id="auth-email" required class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="text-xs text-slate-400 block mb-1">รหัสผ่าน</label>
-                    <input type="password" id="auth-password" required class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-bold rounded text-white transition">เข้าสู่ระบบ</button>
-            </form>
+            </aside>
         </div>
     </div>
 
-    <!-- Modal 100 Markets -->
-    <div id="search-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-xl flex flex-col max-h-[80vh] overflow-hidden">
-            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-                <input type="text" id="market-search-input" oninput="renderModalMarketList()" placeholder="ค้นหาตลาด..." class="bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white w-full max-w-md">
-                <button onclick="closeSearchModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+    <!-- ==================== MODAL: 100 MARKETS SELECTION ==================== -->
+    <div id="search-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-3xl rounded-2xl flex flex-col max-h-[85vh] overflow-hidden shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between gap-3">
+                <input type="text" id="market-search-input" oninput="renderModalMarketList()" placeholder="ค้นหาชื่อสินทรัพย์ หรือ ตัวย่อ (เช่น BTC, XAU, EUR, NVDA)..." class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white w-full text-sm focus:outline-none focus:border-blue-500">
+                <button onclick="closeSearchModal()" class="text-slate-400 hover:text-white text-2xl font-bold px-2">&times;</button>
             </div>
-            <div id="modal-market-list" class="flex-1 overflow-y-auto p-2 grid grid-cols-1 md:grid-cols-2 gap-1"></div>
+
+            <!-- Categories Tabs -->
+            <div class="flex px-4 py-2 border-b border-slate-800 gap-2 text-xs font-bold overflow-x-auto">
+                <button onclick="filterCat('ALL')" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white whitespace-nowrap">ทั้งหมด (100)</button>
+                <button onclick="filterCat('CRYPTO')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 whitespace-nowrap">คริปโต (40)</button>
+                <button onclick="filterCat('FOREX')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 whitespace-nowrap">ฟอเร็กซ์ (25)</button>
+                <button onclick="filterCat('COMMODITIES')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 whitespace-nowrap">สินค้าโภคภัณฑ์ (15)</button>
+                <button onclick="filterCat('STOCKS')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 whitespace-nowrap">หุ้น & ดัชนี (20)</button>
+            </div>
+
+            <div id="modal-market-list" class="flex-1 overflow-y-auto p-3 grid grid-cols-1 md:grid-cols-2 gap-2"></div>
         </div>
     </div>
 
+    <!-- ==================== MODAL: WALLET DEPOSIT / WITHDRAW (REAL ACCOUNT) ==================== -->
+    <div id="wallet-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 relative shadow-2xl">
+            <button onclick="closeWalletModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">&times;</button>
+            <h3 id="wallet-modal-title" class="text-lg font-bold text-white mb-4">ฝากเงินเข้าบัญชีจริง</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">จำนวนเงิน ($ USD)</label>
+                    <input type="number" id="wallet-amount" value="500" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-white font-mono focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs text-slate-400 space-y-1">
+                    <div class="flex justify-between"><span>ช่องทางชำระ:</span> <span class="text-white">USDT / Bank Transfer</span></div>
+                    <div class="flex justify-between"><span>ค่าธรรมเนียม:</span> <span class="text-emerald-400">0.00%</span></div>
+                </div>
+                <button onclick="processWalletAction()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-lg text-white shadow-lg transition text-sm">ยืนยันทำรายการ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SCRIPT LOGIC -->
     <script>
         const API_URL = 'https://nexus-backend-api-laj3.onrender.com/api';
         let authToken = localStorage.getItem('nexus_jwt');
-        let currentUser = null;
         let authMode = 'LOGIN';
+        let currentAccountType = 'DEMO'; // 'DEMO' or 'REAL'
+        let demoBalance = parseFloat(localStorage.getItem('nexus_demo_balance') || '100000');
+        let realBalance = 0.00;
 
-        const MARKET_LIST = [
-            { symbol: 'BTC/USD', wsSymbol: 'btcusdt', name: 'Bitcoin', cat: 'CRYPTO', basePrice: 65000 },
-            { symbol: 'ETH/USD', wsSymbol: 'ethusdt', name: 'Ethereum', cat: 'CRYPTO', basePrice: 3500 },
-            { symbol: 'SOL/USD', wsSymbol: 'solusdt', name: 'Solana', cat: 'CRYPTO', basePrice: 145 },
-            { symbol: 'EUR/USD', name: 'Euro / USD', cat: 'FOREX', basePrice: 1.0880 },
-            { symbol: 'XAU/USD', name: 'Gold / USD', cat: 'COMMODITIES', basePrice: 2450.00 }
-        ];
-
+        // Generate 100 Financial Markets Data Array
+        const MARKET_LIST = generate100Markets();
         let currentAsset = MARKET_LIST[0];
         let currentSide = 'BUY';
+        let activeCategory = 'ALL';
         let chart, candleSeries, lastPrice = 65000;
         let activePositions = [];
 
-        function openAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
-        function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
-        function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); renderModalMarketList(); }
-        function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
+        function generate100Markets() {
+            const list = [];
+            const cryptos = ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX','DOT','LINK','MATIC','BNB','SHIB','LTC','UNI','NEAR','ATOM','APT','FIL','ARB','OP','SUI','INJ','RNDR','TIA','FET','PEPE','WIF','FLOKI','STX','AAVE','MKR','CRV','LDO','QNT','ALGO','GRT','THETA','FTM','FLOW','EOS'];
+            cryptos.forEach(c => list.push({ symbol: `${c}/USD`, name: `${c} Crypto Token`, cat: 'CRYPTO', basePrice: Math.random() * 2000 + 10 }));
+            
+            const forexs = ['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','USD/CHF','NZD/USD','EUR/GBP','EUR/JPY','GBP/JPY','AUD/JPY','EUR/AUD','GBP/CAD','EUR/CAD','USD/THB','EUR/THB','GBP/THB','USD/SGD','USD/HKD','USD/CNH','USD/MXN','USD/ZAR','USD/SEK','USD/NOK','USD/TRY'];
+            forexs.forEach(f => list.push({ symbol: f, name: `Forex Pair ${f}`, cat: 'FOREX', basePrice: Math.random() * 2 + 0.8 }));
 
-        function switchAuthTab(mode) {
-            authMode = mode;
-            document.getElementById('field-fullname').classList.toggle('hidden', mode === 'LOGIN');
-            document.getElementById('btn-auth-submit').innerText = mode === 'LOGIN' ? 'เข้าสู่ระบบ' : 'ลงทะเบียนสมัครสมาชิก';
-            document.getElementById('tab-login').className = mode === 'LOGIN' ? 'pb-2 font-bold text-blue-500 border-b-2 border-blue-500' : 'pb-2 font-bold text-slate-400';
-            document.getElementById('tab-register').className = mode === 'REGISTER' ? 'pb-2 font-bold text-blue-500 border-b-2 border-blue-500' : 'pb-2 font-bold text-slate-400';
+            const commodities = ['XAU/USD','XAG/USD','USOIL','UKOIL','NGAS','COPPER','PLATINUM','PALLADIUM','CORN','SOYBEAN','WHEAT','SUGAR','COFFEE','COTTON','COCOA'];
+            commodities.forEach(c => list.push({ symbol: c, name: `Commodity ${c}`, cat: 'COMMODITIES', basePrice: Math.random() * 1000 + 20 }));
+
+            const stocks = ['AAPL','TSLA','NVDA','MSFT','AMZN','GOOGL','META','NFLX','AMD','INTC','US30','US500','NAS100','GER30','UK100','JP225','HK50','BTC3X','SPY','QQQ'];
+            stocks.forEach(s => list.push({ symbol: s, name: `Stock/Index ${s}`, cat: 'STOCKS', basePrice: Math.random() * 500 + 50 }));
+
+            list[0] = { symbol: 'BTC/USD', name: 'Bitcoin', cat: 'CRYPTO', basePrice: 65000 };
+            list[1] = { symbol: 'ETH/USD', name: 'Ethereum', cat: 'CRYPTO', basePrice: 3500 };
+            list[40] = { symbol: 'EUR/USD', name: 'Euro / US Dollar', cat: 'FOREX', basePrice: 1.0880 };
+            list[65] = { symbol: 'XAU/USD', name: 'Gold / US Dollar', cat: 'COMMODITIES', basePrice: 2450.00 };
+            return list;
         }
 
-        function setSide(side) {
-            currentSide = side;
-            document.getElementById('btn-side-buy').className = side === 'BUY' ? 'flex-1 py-2 rounded font-bold bg-emerald-600 text-white' : 'flex-1 py-2 rounded font-bold bg-slate-800 text-slate-400';
-            document.getElementById('btn-side-sell').className = side === 'SELL' ? 'flex-1 py-2 rounded font-bold bg-rose-600 text-white' : 'flex-1 py-2 rounded font-bold bg-slate-800 text-slate-400';
+        // Authentication Views Switching
+        function switchAuthMode(mode) {
+            authMode = mode;
+            document.getElementById('input-group-name').classList.toggle('hidden', mode === 'LOGIN');
+            document.getElementById('btn-auth-submit').innerText = mode === 'LOGIN' ? 'เข้าสู่ระบบความปลอดภัย' : 'สร้างบัญชีผู้ใช้ใหม่';
+            document.getElementById('tab-btn-login').className = mode === 'LOGIN' ? 'flex-1 pb-3 text-blue-500 border-b-2 border-blue-500 transition' : 'flex-1 pb-3 text-slate-400 transition';
+            document.getElementById('tab-btn-register').className = mode === 'REGISTER' ? 'flex-1 pb-3 text-blue-500 border-b-2 border-blue-500 transition' : 'flex-1 pb-3 text-slate-400 transition';
         }
 
         async function handleAuthSubmit(e) {
@@ -164,34 +268,79 @@
             const password = document.getElementById('auth-password').value;
             const fullName = document.getElementById('auth-fullname').value;
 
-            const endpoint = authMode === 'LOGIN' ? '/auth/login' : '/auth/register';
-            const payload = authMode === 'LOGIN' ? { email, password } : { email, password, fullName };
+            if (authMode === 'REGISTER') {
+                // Show OTP Step First for security
+                document.getElementById('form-auth').classList.add('hidden');
+                document.getElementById('auth-tabs').classList.add('hidden');
+                document.getElementById('form-otp').classList.remove('hidden');
+                return;
+            }
 
             try {
-                const res = await fetch(API_URL + endpoint, {
+                const res = await fetch(API_URL + '/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
-
                 if (!res.ok) throw new Error(data.error);
 
                 authToken = data.token;
                 localStorage.setItem('nexus_jwt', authToken);
-                currentUser = data.user;
-                closeAuthModal();
-                syncAccountData();
+                enterDashboard();
             } catch (err) {
-                alert('เกิดข้อผิดพลาด: ' + err.message);
+                alert('การเข้าสู่ระบบล้มเหลว: ' + err.message);
             }
+        }
+
+        async function handleOtpSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const fullName = document.getElementById('auth-fullname').value;
+
+            try {
+                const res = await fetch(API_URL + '/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, fullName })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                alert('ยืนยันตัวตนสำเร็จ! กรุณาเข้าสู่ระบบด้วยบัญชีของคุณ');
+                location.reload();
+            } catch (err) {
+                alert('สมัครสมาชิกล้มเหลว: ' + err.message);
+            }
+        }
+
+        function enterDashboard() {
+            document.getElementById('view-auth').classList.add('hidden');
+            document.getElementById('view-app').classList.remove('hidden');
+            initChart();
+            syncAccountData();
         }
 
         function logout() {
             localStorage.removeItem('nexus_jwt');
-            authToken = null;
-            currentUser = null;
             location.reload();
+        }
+
+        // Account Switcher Logic (Demo vs Real)
+        function switchAccountType(type) {
+            currentAccountType = type;
+            document.getElementById('btn-acc-demo').className = type === 'DEMO' ? 'px-2.5 py-1 rounded-md bg-blue-600 text-white transition' : 'px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition';
+            document.getElementById('btn-acc-real').className = type === 'REAL' ? 'px-2.5 py-1 rounded-md bg-emerald-600 text-white transition' : 'px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition';
+            document.getElementById('account-type-label').innerText = type === 'DEMO' ? 'บัญชีทดลอง (Demo)' : 'บัญชีจริง (Real)';
+            document.getElementById('real-actions').classList.toggle('hidden', type === 'DEMO');
+            updateBalanceDisplay();
+            renderPositions();
+        }
+
+        function updateBalanceDisplay() {
+            const bal = currentAccountType === 'DEMO' ? demoBalance : realBalance;
+            document.getElementById('user-balance').innerText = `$${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
         }
 
         async function syncAccountData() {
@@ -203,61 +352,79 @@
                 if (res.status === 401 || res.status === 403) return logout();
 
                 const data = await res.json();
-                document.getElementById('account-info').classList.remove('hidden');
-                document.getElementById('btn-auth-open').classList.add('hidden');
-                document.getElementById('user-display-name').innerText = currentUser?.fullName || data?.user?.email || 'User Account';
-                document.getElementById('user-balance').innerText = `$${parseFloat(data.wallet.balance).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                
+                realBalance = parseFloat(data.wallet.balance);
                 activePositions = data.positions || [];
+                updateBalanceDisplay();
                 renderPositions();
             } catch (err) {
-                console.error("Account sync failed", err);
+                console.error("Account Sync Failure", err);
             }
         }
 
-        async function executeTrade() {
-            if (!authToken) return openAuthModal();
+        function setSide(side) {
+            currentSide = side;
+            document.getElementById('btn-side-buy').className = side === 'BUY' ? 'flex-1 py-2.5 rounded-lg font-bold bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition' : 'flex-1 py-2.5 rounded-lg font-bold bg-slate-800 text-slate-400 transition';
+            document.getElementById('btn-side-sell').className = side === 'SELL' ? 'flex-1 py-2.5 rounded-lg font-bold bg-rose-600 text-white shadow-lg shadow-rose-600/20 transition' : 'flex-1 py-2.5 rounded-lg font-bold bg-slate-800 text-slate-400 transition';
+        }
 
+        async function executeTrade() {
             const amount = parseFloat(document.getElementById('order-amount').value);
             const leverage = parseInt(document.getElementById('order-leverage').value);
 
+            if (currentAccountType === 'DEMO') {
+                if (demoBalance < amount) return alert('ยอดเงินในบัญชี Demo ไม่เพียงพอ');
+                demoBalance -= amount;
+                localStorage.setItem('nexus_demo_balance', demoBalance.toString());
+                
+                activePositions.push({
+                    id: 'demo_' + Date.now(),
+                    symbol: currentAsset.symbol,
+                    side: currentSide,
+                    amount,
+                    leverage,
+                    entry_price: lastPrice,
+                    isDemo: true
+                });
+                updateBalanceDisplay();
+                renderPositions();
+                return;
+            }
+
+            // Real Account Execution via Server API
             try {
                 const res = await fetch(API_URL + '/trade/order', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        symbol: currentAsset.symbol,
-                        side: currentSide,
-                        amount,
-                        leverage,
-                        currentPrice: lastPrice
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                    body: JSON.stringify({ symbol: currentAsset.symbol, side: currentSide, amount, leverage, currentPrice: lastPrice })
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
-
                 syncAccountData();
             } catch (err) {
-                alert("การส่งคำสั่งล้มเหลว: " + err.message);
+                alert("ส่งคำสั่งล้มเหลว: " + err.message);
             }
         }
 
         async function closePosition(id) {
+            const pos = activePositions.find(p => p.id === id);
+            if (pos && pos.isDemo) {
+                const pnl = (Math.random() - 0.48) * (pos.amount * 0.2);
+                demoBalance += (pos.amount + pnl);
+                localStorage.setItem('nexus_demo_balance', demoBalance.toString());
+                activePositions = activePositions.filter(p => p.id !== id);
+                updateBalanceDisplay();
+                renderPositions();
+                return;
+            }
+
             try {
                 const res = await fetch(API_URL + '/trade/close', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
                     body: JSON.stringify({ positionId: id, closePrice: lastPrice })
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
-
                 syncAccountData();
             } catch (err) {
                 alert("ปิดสถานะล้มเหลว: " + err.message);
@@ -266,39 +433,67 @@
 
         function renderPositions() {
             const listEl = document.getElementById('positions-list');
-            if (!activePositions || activePositions.length === 0) {
-                listEl.innerHTML = `<div class="text-xs text-slate-500 text-center py-8">ไม่มีออเดอร์ค้างในระบบ</div>`;
+            document.getElementById('pos-count').innerText = activePositions.length;
+
+            if (activePositions.length === 0) {
+                listEl.innerHTML = `<div class="text-xs text-slate-500 text-center py-10">ไม่มีออเดอร์เปิดค้างอยู่</div>`;
                 return;
             }
 
             listEl.innerHTML = activePositions.map(pos => `
-                <div class="bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-xs space-y-1">
+                <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs space-y-1.5">
                     <div class="flex justify-between items-center">
                         <span class="font-bold ${pos.side === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}">${pos.side} ${pos.symbol}</span>
-                        <span class="bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-400">${pos.leverage}x</span>
+                        <span class="bg-slate-800 px-2 py-0.5 rounded text-[10px] text-slate-300 font-mono">${pos.leverage}x</span>
                     </div>
-                    <div class="flex justify-between text-slate-400">
+                    <div class="flex justify-between text-slate-400 font-mono text-[11px]">
                         <span>Entry: $${parseFloat(pos.entry_price).toFixed(2)}</span>
-                        <span>Amount: $${parseFloat(pos.amount).toFixed(2)}</span>
+                        <span>Margin: $${parseFloat(pos.amount).toFixed(2)}</span>
                     </div>
-                    <button onclick="closePosition('${pos.id}')" class="w-full bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 py-1 rounded mt-1 transition">ปิดสถานะฝั่ง Server</button>
+                    <button onclick="closePosition('${pos.id}')" class="w-full bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/20 py-1.5 rounded-lg mt-1 font-bold transition">ปิดสถานะ</button>
                 </div>
             `).join('');
         }
 
+        // 100 Markets Modal Functions
+        function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); renderModalMarketList(); }
+        function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
+        function openWalletModal(mode) { 
+            document.getElementById('wallet-modal').classList.remove('hidden'); 
+            document.getElementById('wallet-modal-title').innerText = mode === 'DEPOSIT' ? 'ฝากเงินเข้าบัญชีจริง' : 'ถอนเงินออกจากบัญชีจริง';
+        }
+        function closeWalletModal() { document.getElementById('wallet-modal').classList.add('hidden'); }
+
+        function processWalletAction() {
+            const amt = parseFloat(document.getElementById('wallet-amount').value);
+            realBalance += amt;
+            updateBalanceDisplay();
+            closeWalletModal();
+            alert('ทำรายการสำเร็จ!');
+        }
+
+        function filterCat(cat) {
+            activeCategory = cat;
+            renderModalMarketList();
+        }
+
         function renderModalMarketList() {
             const filter = document.getElementById('market-search-input').value.toLowerCase();
-            const filtered = MARKET_LIST.filter(m => m.symbol.toLowerCase().includes(filter) || m.name.toLowerCase().includes(filter));
-            
+            const filtered = MARKET_LIST.filter(m => {
+                const matchCat = activeCategory === 'ALL' || m.cat === activeCategory;
+                const matchSearch = m.symbol.toLowerCase().includes(filter) || m.name.toLowerCase().includes(filter);
+                return matchCat && matchSearch;
+            });
+
             document.getElementById('modal-market-list').innerHTML = filtered.map(m => `
-                <button onclick="selectAsset('${m.symbol}')" class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-800 transition text-left">
+                <button onclick="selectAsset('${m.symbol}')" class="flex items-center justify-between p-3 rounded-xl bg-slate-950/50 hover:bg-slate-800 border border-slate-800/80 transition text-left">
                     <div>
                         <div class="font-bold text-white text-sm">${m.symbol}</div>
-                        <div class="text-xs text-slate-400">${m.name}</div>
+                        <div class="text-[11px] text-slate-400">${m.name}</div>
                     </div>
                     <div class="text-right">
-                        <div class="font-mono text-sm font-bold text-slate-200">$${m.basePrice.toLocaleString()}</div>
-                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-blue-400">${m.cat}</span>
+                        <div class="font-mono text-xs font-bold text-slate-200">$${m.basePrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-blue-400 font-semibold">${m.cat}</span>
                     </div>
                 </button>
             `).join('');
@@ -309,43 +504,59 @@
             document.getElementById('current-symbol-display').innerText = currentAsset.symbol;
             document.getElementById('current-name-display').innerText = currentAsset.name;
             lastPrice = currentAsset.basePrice;
-            document.getElementById('live-price').innerText = `$${lastPrice.toLocaleString()}`;
+            document.getElementById('live-price').innerText = `$${lastPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
             closeSearchModal();
+            updateChartData();
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        // Lightweight Charts Initializer
+        function initChart() {
             const container = document.getElementById('chart-container');
-            
+            if (!container || chart) return;
+
             chart = LightweightCharts.createChart(container, {
-                width: container.clientWidth || 800,
-                height: container.clientHeight || 500,
-                layout: { backgroundColor: '#020617', textColor: '#94a3b8' },
-                grid: { vertLines: { color: '#0f172a' }, horzLines: { color: '#0f172a' } }
+                width: container.clientWidth,
+                height: container.clientHeight,
+                layout: { background: { type: 'solid', color: '#090d16' }, textColor: '#64748b' },
+                grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
+                crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
             });
-            
-            candleSeries = chart.addCandlestickSeries({ upColor: '#10b981', downColor: '#ef4444' });
+
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#10b981', downColor: '#ef4444', borderVisible: false, wickUpColor: '#10b981', wickDownColor: '#ef4444'
+            });
 
             const resizeObserver = new ResizeObserver(entries => {
-                if (!entries || entries.length === 0) return;
-                const { width, height } = entries[0].contentRect;
-                chart.applyOptions({ width, height });
+                if (entries.length > 0) {
+                    const { width, height } = entries[0].contentRect;
+                    chart.applyOptions({ width, height });
+                }
             });
             resizeObserver.observe(container);
+            updateChartData();
+        }
 
+        function updateChartData() {
+            if (!candleSeries) return;
             let now = Math.floor(Date.now() / 1000) - 100 * 3600;
             let p = lastPrice;
             let data = [];
-            for(let i=0; i<100; i++) {
-                let open = p + (Math.random() - 0.5) * 50;
-                let high = open + Math.random() * 30;
-                let low = open - Math.random() * 30;
+            for (let i = 0; i < 120; i++) {
+                let open = p + (Math.random() - 0.5) * (p * 0.005);
+                let high = open + Math.random() * (p * 0.003);
+                let low = open - Math.random() * (p * 0.003);
                 let close = (high + low) / 2;
                 data.push({ time: now + i * 3600, open, high, low, close });
                 p = close;
             }
             candleSeries.setData(data);
+        }
 
-            if (authToken) syncAccountData();
+        // Auto Check Token on Load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (authToken) {
+                enterDashboard();
+            }
         });
     </script>
 </body>
