@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NexusPro Enterprise Trading Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans h-screen flex flex-col overflow-hidden">
+<body class="bg-slate-950 text-slate-100 font-sans h-screen flex flex-col overflow-hidden" style="background-color: #020617;">
 
     <!-- Header Navigation -->
     <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 shrink-0">
@@ -46,8 +46,8 @@
 
     <!-- Trading Dashboard -->
     <div class="flex-1 flex overflow-hidden">
-        <main class="flex-1 bg-slate-950 relative">
-            <div id="chart-container" class="w-full h-full"></div>
+        <main class="flex-1 relative overflow-hidden" style="background-color: #020617;">
+            <div id="chart-container" class="w-full h-full" style="background-color: #020617;"></div>
         </main>
 
         <aside class="w-80 bg-slate-900 border-l border-slate-800 flex flex-col shrink-0">
@@ -205,18 +205,14 @@
                 const data = await res.json();
                 document.getElementById('account-info').classList.remove('hidden');
                 document.getElementById('btn-auth-open').classList.add('hidden');
-                document.getElementById('user-display-name').innerText = currentUser?.fullName || reqEmailUser(data);
+                document.getElementById('user-display-name').innerText = currentUser?.fullName || data?.user?.email || 'User Account';
                 document.getElementById('user-balance').innerText = `$${parseFloat(data.wallet.balance).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
                 
-                activePositions = data.positions;
+                activePositions = data.positions || [];
                 renderPositions();
             } catch (err) {
                 console.error("Account sync failed", err);
             }
-        }
-
-        function reqEmailUser(data) {
-            return data?.user?.email || 'User Account';
         }
 
         async function executeTrade() {
@@ -270,7 +266,7 @@
 
         function renderPositions() {
             const listEl = document.getElementById('positions-list');
-            if (activePositions.length === 0) {
+            if (!activePositions || activePositions.length === 0) {
                 listEl.innerHTML = `<div class="text-xs text-slate-500 text-center py-8">ไม่มีออเดอร์ค้างในระบบ</div>`;
                 return;
             }
@@ -319,13 +315,23 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('chart-container');
+            
             chart = LightweightCharts.createChart(container, {
+                width: container.clientWidth || 800,
+                height: container.clientHeight || 500,
                 layout: { backgroundColor: '#020617', textColor: '#94a3b8' },
                 grid: { vertLines: { color: '#0f172a' }, horzLines: { color: '#0f172a' } }
             });
+            
             candleSeries = chart.addCandlestickSeries({ upColor: '#10b981', downColor: '#ef4444' });
 
-            // Mock Data
+            const resizeObserver = new ResizeObserver(entries => {
+                if (!entries || entries.length === 0) return;
+                const { width, height } = entries[0].contentRect;
+                chart.applyOptions({ width, height });
+            });
+            resizeObserver.observe(container);
+
             let now = Math.floor(Date.now() / 1000) - 100 * 3600;
             let p = lastPrice;
             let data = [];
