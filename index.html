@@ -1,206 +1,282 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" id="html-root" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusPro - Institutional AI Trading Platform</title>
+    <title>NexusPro - Advanced Institutional Trading Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        binance: {
+                            bg: '#0b0e11',
+                            card: '#181a20',
+                            border: '#2b313a',
+                            yellow: '#fcd535',
+                            yellowHover: '#f0b90b',
+                            green: '#0ecb81',
+                            red: '#f6465d',
+                            lightBg: '#f5f5f5',
+                            lightCard: '#ffffff',
+                            lightBorder: '#e0e0e0'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: #0b0e11; }
-        ::-webkit-scrollbar-thumb { background: #2b313a; border-radius: 2px; }
-        body { background-color: #0b0e11; color: #eaecef; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        .bg-binance-yellow { background-color: #fcd535; }
-        .hover-binance-yellow:hover { background-color: #f0b90b; }
-        .text-binance-yellow { color: #fcd535; }
-        .border-binance-yellow { border-color: #fcd535; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #363c4e; border-radius: 2px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col overflow-hidden select-none">
+<body class="h-screen w-screen flex flex-col overflow-hidden select-none bg-binance-bg text-gray-200 dark:bg-binance-bg dark:text-gray-200 transition-colors duration-200">
 
-    <!-- ==================== VIEW 1: BINANCE-STYLE AUTH & OTP GATE ==================== -->
-    <div id="view-auth" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0b0e11]">
-        <div class="w-full max-w-md bg-[#181a20] border border-[#2b313a] rounded-2xl p-6 shadow-2xl relative">
+    <!-- ==================== VIEW 1: AUTH & OTP GATE ==================== -->
+    <div id="view-auth" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-binance-bg dark:bg-binance-bg">
+        <div class="w-full max-w-md bg-binance-card dark:bg-binance-card border border-binance-border dark:border-binance-border rounded-2xl p-6 shadow-2xl relative">
             
-            <!-- Logo Header -->
-            <div class="text-center mb-6">
+            <div class="flex justify-between items-center mb-4">
                 <div class="inline-flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-black font-extrabold text-xl">N</div>
-                    <h1 class="text-2xl font-bold tracking-wider text-white">NEXUS<span class="text-binance-yellow">PRO</span></h1>
+                    <div class="w-8 h-8 bg-binance-yellow rounded-lg flex items-center justify-center text-black font-extrabold text-xl">N</div>
+                    <h1 class="text-2xl font-bold tracking-wider text-white dark:text-white">NEXUS<span class="text-binance-yellow">PRO</span></h1>
                 </div>
-                <p class="text-xs text-gray-400 mt-1">Smart AI Multi-Asset Exchange Platform</p>
+                <!-- Lang & Theme Toggle on Auth Screen -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleLang()" class="px-2 py-1 text-xs border border-binance-border rounded text-binance-yellow font-bold" id="auth-lang-btn">TH / EN</button>
+                    <button onclick="toggleTheme()" class="px-2 py-1 text-xs border border-binance-border rounded text-gray-300">🌗</button>
+                </div>
             </div>
 
-            <!-- Login / Register Switcher -->
-            <div id="auth-tabs" class="flex border-b border-[#2b313a] mb-6 text-sm font-semibold">
-                <button id="tab-btn-login" onclick="switchAuthMode('LOGIN')" class="flex-1 pb-3 text-binance-yellow border-b-2 border-binance-yellow transition">เข้าสู่ระบบ</button>
-                <button id="tab-btn-register" onclick="switchAuthMode('REGISTER')" class="flex-1 pb-3 text-gray-400 transition">ลงทะเบียน</button>
+            <p class="text-xs text-gray-400 mb-6 text-center" data-i18n="auth_subtitle">Smart AI Multi-Asset Exchange Platform</p>
+
+            <!-- Tabs -->
+            <div id="auth-tabs" class="flex border-b border-binance-border mb-6 text-sm font-semibold">
+                <button id="tab-btn-login" onclick="switchAuthMode('LOGIN')" class="flex-1 pb-3 text-binance-yellow border-b-2 border-binance-yellow transition" data-i18n="tab_login">เข้าสู่ระบบ</button>
+                <button id="tab-btn-register" onclick="switchAuthMode('REGISTER')" class="flex-1 pb-3 text-gray-400 transition" data-i18n="tab_register">ลงทะเบียน</button>
             </div>
 
-            <!-- Form: LOGIN / REGISTER -->
+            <!-- Form LOGIN/REGISTER -->
             <form id="form-auth" onsubmit="handleAuthSubmit(event)" class="space-y-4">
-                
-                <!-- Email / Phone Switcher -->
-                <div class="flex text-xs bg-[#0b0e11] p-1 rounded-lg border border-[#2b313a] mb-2">
-                    <button type="button" id="btn-type-email" onclick="setContactType('EMAIL')" class="flex-1 py-1 rounded bg-[#2b313a] text-white font-medium">อีเมล</button>
-                    <button type="button" id="btn-type-phone" onclick="setContactType('PHONE')" class="flex-1 py-1 rounded text-gray-400 font-medium">เบอร์โทรศัพท์ (SMS)</button>
+                <div class="flex text-xs bg-binance-bg p-1 rounded-lg border border-binance-border mb-2">
+                    <button type="button" id="btn-type-email" onclick="setContactType('EMAIL')" class="flex-1 py-1 rounded bg-binance-border text-white font-medium" data-i18n="btn_email">อีเมล</button>
+                    <button type="button" id="btn-type-phone" onclick="setContactType('PHONE')" class="flex-1 py-1 rounded text-gray-400 font-medium" data-i18n="btn_phone">เบอร์โทรศัพท์ (SMS)</button>
                 </div>
 
                 <div id="input-group-name" class="hidden">
-                    <label class="block text-xs text-gray-400 mb-1">ชื่อ-นามสกุล (ตามเอกสาร ยืนยันตัวตน)</label>
-                    <input type="text" id="auth-fullname" placeholder="John Doe" class="w-full bg-[#0b0e11] border border-[#2b313a] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-binance-yellow text-white">
+                    <label class="block text-xs text-gray-400 mb-1" data-i18n="lbl_fullname">ชื่อ-นามสกุล</label>
+                    <input type="text" id="auth-fullname" placeholder="John Doe" class="w-full bg-binance-bg border border-binance-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-binance-yellow text-white">
                 </div>
 
                 <div>
-                    <label id="lbl-contact" class="block text-xs text-gray-400 mb-1">อีเมลผู้ใช้งาน</label>
-                    <input type="text" id="auth-contact" required placeholder="name@domain.com" class="w-full bg-[#0b0e11] border border-[#2b313a] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-binance-yellow text-white">
+                    <label id="lbl-contact" class="block text-xs text-gray-400 mb-1" data-i18n="lbl_contact_email">อีเมลผู้ใช้งาน</label>
+                    <input type="text" id="auth-contact" required placeholder="name@domain.com" class="w-full bg-binance-bg border border-binance-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-binance-yellow text-white">
                 </div>
 
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">รหัสผ่าน</label>
-                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-[#0b0e11] border border-[#2b313a] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-binance-yellow text-white">
+                    <label class="block text-xs text-gray-400 mb-1" data-i18n="lbl_password">รหัสผ่าน</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••" class="w-full bg-binance-bg border border-binance-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-binance-yellow text-white">
                 </div>
 
-                <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-binance-yellow hover-binance-yellow text-black font-bold rounded-lg shadow-lg transition text-sm">เข้าสู่ระบบความปลอดภัย</button>
+                <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-binance-yellow hover:bg-binance-yellowHover text-black font-bold rounded-lg shadow-lg transition text-sm" data-i18n="btn_submit_login">เข้าสู่ระบบความปลอดภัย</button>
             </form>
 
-            <!-- Form: OTP VERIFICATION -->
+            <!-- OTP Form -->
             <div id="form-otp" class="space-y-4 hidden text-center">
                 <div class="py-2">
                     <div class="inline-flex p-3 rounded-full bg-yellow-400/10 text-binance-yellow mb-2">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     </div>
-                    <h3 class="text-base font-bold text-white">ยืนยันรหัสความปลอดภัย OTP</h3>
+                    <h3 class="text-base font-bold text-white" data-i18n="otp_title">ยืนยันรหัสความปลอดภัย OTP</h3>
                     <p id="otp-destination-text" class="text-xs text-gray-400 mt-1">ส่งรหัสผ่านไปยังช่องทางของคุณแล้ว</p>
                 </div>
 
                 <div class="flex justify-center space-x-2 my-2">
-                    <input type="text" maxlength="6" id="otp-code" placeholder="123456" class="w-48 text-center tracking-[0.5em] font-mono text-xl font-bold bg-[#0b0e11] border border-binance-yellow rounded-lg py-2 text-white focus:outline-none">
+                    <input type="text" maxlength="6" id="otp-code" placeholder="123456" class="w-48 text-center tracking-[0.5em] font-mono text-xl font-bold bg-binance-bg border border-binance-yellow rounded-lg py-2 text-white focus:outline-none">
                 </div>
 
-                <!-- OTP Control Action Buttons -->
                 <div class="flex items-center justify-between text-xs px-2">
                     <button type="button" onclick="backToAuthForm()" class="text-gray-400 hover:text-white flex items-center space-x-1">
-                        <span>← ย้อนกลับแก้ไข</span>
+                        <span data-i18n="btn_back">← ย้อนกลับแก้ไข</span>
                     </button>
                     <button type="button" id="btn-resend-otp" onclick="resendOTP()" class="text-binance-yellow hover:underline disabled:opacity-50">
-                        ขอรหัส OTP อีกครั้ง (<span id="resend-timer">60</span>s)
+                        <span data-i18n="btn_resend">ขอรหัส OTP อีกครั้ง</span> (<span id="resend-timer">60</span>s)
                     </button>
                 </div>
 
-                <button type="button" onclick="handleOtpSubmit()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 font-bold rounded-lg text-black shadow-lg transition text-sm">ยืนยันตัวตนและเข้าสู่ระบบ</button>
+                <button type="button" onclick="handleOtpSubmit()" class="w-full py-3 bg-binance-green hover:opacity-90 font-bold rounded-lg text-black shadow-lg transition text-sm" data-i18n="btn_verify_otp">ยืนยันตัวตนและเข้าสู่ระบบ</button>
             </div>
 
-            <div class="mt-6 pt-4 border-t border-[#2b313a] text-center text-[11px] text-gray-500">
+            <div class="mt-6 pt-4 border-t border-binance-border text-center text-[11px] text-gray-500">
                 Protected by 256-Bit SSL Encryption & AI Fraud Detection
             </div>
         </div>
     </div>
 
-    <!-- ==================== VIEW 2: BINANCE MAIN DASHBOARD & AI ENGINE ==================== -->
+    <!-- ==================== VIEW 2: BINANCE PRO DASHBOARD ==================== -->
     <div id="view-app" class="h-full w-full flex flex-col hidden">
         
-        <!-- Header Nav -->
-        <header class="h-14 bg-[#181a20] border-b border-[#2b313a] flex items-center justify-between px-4 shrink-0">
+        <!-- Top Nav -->
+        <header class="h-14 bg-binance-card border-b border-binance-border flex items-center justify-between px-4 shrink-0">
             <div class="flex items-center space-x-4">
                 <div class="flex items-center space-x-2">
-                    <div class="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center text-black font-extrabold text-sm">N</div>
+                    <div class="w-6 h-6 bg-binance-yellow rounded flex items-center justify-center text-black font-extrabold text-sm">N</div>
                     <span class="font-bold text-base text-white tracking-wide">NEXUS<span class="text-binance-yellow">PRO</span></span>
                 </div>
 
-                <!-- Asset Selector -->
-                <button onclick="openSearchModal()" class="flex items-center space-x-2 bg-[#0b0e11] hover:bg-[#2b313a] border border-[#2b313a] px-3 py-1.5 rounded-lg transition">
+                <button onclick="openSearchModal()" class="flex items-center space-x-2 bg-binance-bg hover:bg-binance-border border border-binance-border px-3 py-1.5 rounded-lg transition">
                     <span id="current-symbol-display" class="font-bold text-binance-yellow text-xs md:text-sm">BTC/USD</span>
-                    <span id="live-price" class="font-mono font-bold text-emerald-400 text-xs md:text-sm">$65,000.00</span>
+                    <span id="live-price" class="font-mono font-bold text-binance-green text-xs md:text-sm">$65,000.00</span>
                     <span class="text-xs text-gray-500">▼</span>
                 </button>
             </div>
 
-            <!-- Account Type, Balance & AI Badge -->
             <div class="flex items-center space-x-3">
-                <!-- AI Status Badge -->
-                <div class="hidden sm:flex items-center space-x-1.5 bg-yellow-400/10 border border-yellow-400/30 px-2.5 py-1 rounded-full text-xs text-binance-yellow font-bold">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <button onclick="toggleLang()" class="px-2 py-1 text-xs border border-binance-border rounded text-binance-yellow font-bold" id="app-lang-btn">TH / EN</button>
+                <button onclick="toggleTheme()" class="px-2 py-1 text-xs border border-binance-border rounded text-gray-300">🌗</button>
+
+                <!-- AI Status -->
+                <div class="hidden md:flex items-center space-x-1.5 bg-yellow-400/10 border border-yellow-400/30 px-2.5 py-1 rounded-full text-xs text-binance-yellow font-bold">
+                    <span class="w-2 h-2 rounded-full bg-binance-green animate-pulse"></span>
                     <span>AI Engine Active</span>
                 </div>
 
-                <!-- Account Switcher -->
-                <div class="flex bg-[#0b0e11] p-1 rounded-lg border border-[#2b313a] text-xs font-bold">
+                <!-- Account Type Switcher -->
+                <div class="flex bg-binance-bg p-1 rounded-lg border border-binance-border text-xs font-bold">
                     <button id="btn-acc-demo" onclick="switchAccountType('DEMO')" class="px-2.5 py-1 rounded bg-binance-yellow text-black transition">DEMO</button>
                     <button id="btn-acc-real" onclick="switchAccountType('REAL')" class="px-2.5 py-1 rounded text-gray-400 hover:text-white transition">REAL</button>
                 </div>
 
-                <!-- Balance -->
                 <div class="text-right">
-                    <span id="account-type-label" class="text-[10px] text-gray-400 block font-semibold">บัญชีทดลอง</span>
-                    <span id="user-balance" class="font-mono font-bold text-emerald-400 text-sm">$100,000.00</span>
+                    <span id="account-type-label" class="text-[10px] text-gray-400 block font-semibold" data-i18n="lbl_acc_demo">บัญชีทดลอง</span>
+                    <span id="user-balance" class="font-mono font-bold text-binance-green text-sm">$100,000.00</span>
                 </div>
 
-                <button onclick="logout()" class="p-1.5 text-gray-400 hover:text-rose-400 transition" title="Logout">
+                <button onclick="logout()" class="p-1.5 text-gray-400 hover:text-binance-red transition" title="Logout">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </button>
             </div>
         </header>
 
-        <!-- Main Workspace -->
-        <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <!-- Top Overview Market Cards (Hot, Top Gainers, Top Losers, Volume) -->
+        <div class="bg-binance-card border-b border-binance-border p-2 hidden lg:grid grid-cols-4 gap-2 shrink-0 text-xs">
+            <div class="bg-binance-bg p-2 rounded-lg border border-binance-border">
+                <div class="text-gray-400 font-bold mb-1 flex justify-between"><span>🔥 Hot Coins</span><span class="text-binance-yellow">More ></span></div>
+                <div id="card-hot" class="space-y-1 font-mono"></div>
+            </div>
+            <div class="bg-binance-bg p-2 rounded-lg border border-binance-border">
+                <div class="text-gray-400 font-bold mb-1 flex justify-between"><span>🚀 Top Gainers</span><span class="text-binance-green">More ></span></div>
+                <div id="card-gainers" class="space-y-1 font-mono"></div>
+            </div>
+            <div class="bg-binance-bg p-2 rounded-lg border border-binance-border">
+                <div class="text-gray-400 font-bold mb-1 flex justify-between"><span>📉 Top Losers</span><span class="text-binance-red">More ></span></div>
+                <div id="card-losers" class="space-y-1 font-mono"></div>
+            </div>
+            <div class="bg-binance-bg p-2 rounded-lg border border-binance-border">
+                <div class="text-gray-400 font-bold mb-1 flex justify-between"><span>💎 Top Volume</span><span class="text-binance-yellow">More ></span></div>
+                <div id="card-volume" class="space-y-1 font-mono"></div>
+            </div>
+        </div>
+
+        <!-- Main Workspace Grid -->
+        <div class="flex-1 flex flex-col xl:flex-row overflow-hidden">
             
-            <!-- Chart Workspace -->
-            <main class="flex-1 flex flex-col bg-[#0b0e11] overflow-hidden relative">
-                
-                <!-- AI Signal Banner Bar -->
-                <div class="bg-[#181a20] border-b border-[#2b313a] px-4 py-2 flex items-center justify-between text-xs">
-                    <div class="flex items-center space-x-3">
-                        <span class="font-bold text-gray-400">สแกนการวิเคราะห์ AI:</span>
-                        <span id="ai-signal-badge" class="px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400">BUY SIGNAL (89% Confidence)</span>
+            <!-- Order Book Panel (Left) -->
+            <aside class="w-full xl:w-64 bg-binance-card border-b xl:border-b-0 xl:border-r border-binance-border flex flex-col shrink-0 h-48 xl:h-full">
+                <div class="p-2 border-b border-binance-border font-bold text-xs flex justify-between items-center">
+                    <span data-i18n="lbl_orderbook">Order Book (สมุดคำสั่งซื้อขาย)</span>
+                    <span class="text-[10px] text-gray-500 font-mono">Realtime 150ms</span>
+                </div>
+                <div class="flex-1 grid grid-cols-2 xl:grid-cols-1 overflow-hidden p-2 gap-2 text-[11px] font-mono">
+                    <!-- Asks (Sells) -->
+                    <div class="space-y-0.5 overflow-hidden flex flex-col justify-end">
+                        <div class="text-[10px] text-gray-500 flex justify-between"><span>Price($)</span><span>Size</span></div>
+                        <div id="orderbook-asks" class="space-y-0.5"></div>
                     </div>
-                    <div class="text-gray-400 font-mono text-[11px] hidden md:block">
-                        RSI: <span id="ai-rsi-val" class="text-white">42.5</span> | EMA 20: <span id="ai-ema-val" class="text-white">Bullish</span>
+                    <!-- Current Price Divider -->
+                    <div class="col-span-2 xl:col-span-1 py-1 border-y border-binance-border text-center font-bold text-binance-green text-xs" id="ob-mid-price">
+                        $65,000.00 ▲
+                    </div>
+                    <!-- Bids (Buys) -->
+                    <div class="space-y-0.5 overflow-hidden">
+                        <div id="orderbook-bids" class="space-y-0.5"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Chart Center Panel -->
+            <main class="flex-1 flex flex-col bg-binance-bg overflow-hidden relative">
+                <!-- AI Banner & Timeframes -->
+                <div class="bg-binance-card border-b border-binance-border px-4 py-1.5 flex flex-wrap items-center justify-between text-xs gap-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-gray-400" data-i18n="lbl_ai_analysis">สแกนการวิเคราะห์ AI:</span>
+                        <span id="ai-signal-badge" class="px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-binance-green">BUY SIGNAL (92% Confidence)</span>
+                    </div>
+                    <!-- Timeframe Selectors -->
+                    <div class="flex items-center space-x-1 bg-binance-bg p-1 rounded border border-binance-border text-[11px]">
+                        <button onclick="setTimeframe('1s')" class="px-2 py-0.5 rounded hover:bg-binance-border text-binance-yellow font-bold">1s</button>
+                        <button onclick="setTimeframe('1m')" class="px-2 py-0.5 rounded hover:bg-binance-border text-gray-400">1m</button>
+                        <button onclick="setTimeframe('5m')" class="px-2 py-0.5 rounded hover:bg-binance-border text-gray-400">5m</button>
+                        <button onclick="setTimeframe('1H')" class="px-2 py-0.5 rounded hover:bg-binance-border text-gray-400">1H</button>
+                        <button onclick="setTimeframe('1D')" class="px-2 py-0.5 rounded hover:bg-binance-border text-gray-400">1D</button>
                     </div>
                 </div>
 
-                <!-- Interactive Chart -->
-                <div id="chart-container" class="flex-1 w-full h-full min-h-[300px]"></div>
+                <!-- High Performance Chart -->
+                <div id="chart-container" class="flex-1 w-full h-full min-h-[250px]"></div>
             </main>
 
-            <!-- Sidebar: Trade Controls & AI Auto-Bot Switch -->
-            <aside class="w-full md:w-80 bg-[#181a20] border-t md:border-t-0 md:border-l border-[#2b313a] flex flex-col shrink-0">
+            <!-- Market Trades Ticker (Middle-Right) -->
+            <aside class="w-full xl:w-56 bg-binance-card border-t xl:border-t-0 xl:border-l border-binance-border flex flex-col shrink-0 h-40 xl:h-full hidden md:flex">
+                <div class="p-2 border-b border-binance-border font-bold text-xs flex justify-between">
+                    <span data-i18n="lbl_market_trades">Market Trades (การเทรดล่าสุด)</span>
+                </div>
+                <div id="market-trades-list" class="flex-1 overflow-y-auto p-2 space-y-1 font-mono text-[11px]"></div>
+            </aside>
+
+            <!-- Trade Execution Control Panel (Right) -->
+            <aside class="w-full xl:w-72 bg-binance-card border-t xl:border-t-0 xl:border-l border-binance-border flex flex-col shrink-0">
                 
-                <!-- AI Auto-Trader Switch Section -->
-                <div class="p-4 bg-gradient-to-br from-yellow-400/10 to-transparent border-b border-[#2b313a] space-y-2">
+                <!-- AI Bot Toggle -->
+                <div class="p-3 bg-gradient-to-br from-yellow-400/10 to-transparent border-b border-binance-border space-y-2">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2">
                             <span class="text-lg">🤖</span>
-                            <span class="font-bold text-sm text-white">Nexus AI Auto-Bot</span>
+                            <span class="font-bold text-xs text-white">Nexus AI Auto-Bot</span>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="ai-bot-toggle" onchange="toggleAiBot()" class="sr-only peer">
-                            <div class="w-11 h-6 bg-[#2b313a] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
+                            <div class="w-9 h-5 bg-binance-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-binance-yellow"></div>
                         </label>
                     </div>
-                    <p class="text-[11px] text-gray-400">ระบบ AI วิเคราะห์ความเสี่ยง ส่งคำสั่งซื้อ/ขาย และทำกำไรอัตโนมัติ 24/7</p>
-                    <div id="ai-bot-stats" class="hidden pt-2 text-[11px] font-mono border-t border-gray-800 text-binance-yellow flex justify-between">
-                        <span>AI Win Rate: 91.4%</span>
-                        <span>AI Net Profit: +$1,420.00</span>
+                    <p class="text-[10px] text-gray-400" data-i18n="ai_bot_desc">วิเคราะห์สัญญาณและส่งคำสั่งเทรดอัตโนมัติด้วยความเร็วสูง</p>
+                    <div id="ai-bot-stats" class="hidden pt-2 text-[10px] font-mono border-t border-gray-800 text-binance-yellow flex justify-between">
+                        <span>Win Rate: 93.8%</span>
+                        <span>Profit: +$2,840.00</span>
                     </div>
                 </div>
 
-                <!-- Manual Trade Execution Form -->
-                <div class="p-4 border-b border-[#2b313a] space-y-3">
+                <!-- Manual Trade Execution -->
+                <div class="p-3 border-b border-binance-border space-y-3">
                     <div class="flex space-x-2">
-                        <button id="btn-side-buy" onclick="setSide('BUY')" class="flex-1 py-2 rounded-lg font-bold bg-emerald-500 text-black shadow transition text-xs">Buy / Long</button>
-                        <button id="btn-side-sell" onclick="setSide('SELL')" class="flex-1 py-2 rounded-lg font-bold bg-[#2b313a] text-gray-400 transition text-xs">Sell / Short</button>
+                        <button id="btn-side-buy" onclick="setSide('BUY')" class="flex-1 py-2 rounded font-bold bg-binance-green text-black shadow transition text-xs">Buy / Long</button>
+                        <button id="btn-side-sell" onclick="setSide('SELL')" class="flex-1 py-2 rounded font-bold bg-binance-border text-gray-400 transition text-xs">Sell / Short</button>
                     </div>
 
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">จำนวนเงิน ($)</label>
-                        <input type="number" id="order-amount" value="1000" min="10" class="w-full bg-[#0b0e11] border border-[#2b313a] rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-binance-yellow text-sm">
+                        <label class="text-[11px] text-gray-400 block mb-1" data-i18n="lbl_amount">จำนวนเงิน ($)</label>
+                        <input type="number" id="order-amount" value="1000" min="10" class="w-full bg-binance-bg border border-binance-border rounded px-3 py-1.5 text-white font-mono focus:outline-none focus:border-binance-yellow text-xs">
                     </div>
 
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">Leverage</label>
-                        <select id="order-leverage" class="w-full bg-[#0b0e11] border border-[#2b313a] rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-binance-yellow text-sm">
+                        <label class="text-[11px] text-gray-400 block mb-1">Leverage</label>
+                        <select id="order-leverage" class="w-full bg-binance-bg border border-binance-border rounded px-3 py-1.5 text-white font-mono focus:outline-none focus:border-binance-yellow text-xs">
                             <option value="1">1x (Spot)</option>
                             <option value="10">10x</option>
                             <option value="20">20x</option>
@@ -209,38 +285,41 @@
                         </select>
                     </div>
 
-                    <button onclick="executeManualTrade()" class="w-full py-2.5 bg-binance-yellow hover-binance-yellow font-bold rounded-lg text-black transition text-sm">ส่งคำสั่งซื้อขายด้วยตนเอง</button>
+                    <button onclick="executeManualTrade()" class="w-full py-2 bg-binance-yellow hover:bg-binance-yellowHover font-bold rounded text-black transition text-xs" data-i18n="btn_submit_order">ส่งคำสั่งซื้อขายด้วยตนเอง</button>
                 </div>
 
-                <!-- Position List -->
+                <!-- Active Positions -->
                 <div class="flex-1 flex flex-col overflow-hidden">
-                    <div class="px-4 py-2 bg-[#0b0e11] text-[11px] font-bold text-gray-400 border-b border-[#2b313a] flex justify-between items-center">
-                        <span>รายการออเดอร์ที่เปิดอยู่</span>
-                        <span id="pos-count" class="bg-[#2b313a] text-binance-yellow px-1.5 py-0.5 rounded text-[10px]">0</span>
+                    <div class="px-3 py-1.5 bg-binance-bg text-[10px] font-bold text-gray-400 border-b border-binance-border flex justify-between items-center">
+                        <span data-i18n="lbl_open_orders">ออเดอร์ที่เปิดอยู่</span>
+                        <span id="pos-count" class="bg-binance-border text-binance-yellow px-1.5 py-0.5 rounded text-[10px]">0</span>
                     </div>
-                    <div id="positions-list" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+                    <div id="positions-list" class="flex-1 overflow-y-auto p-2 space-y-2"></div>
                 </div>
             </aside>
         </div>
     </div>
 
-    <!-- MODAL: 100 MARKETS SELECTION -->
+    <!-- MODAL: 100+ MARKETS SELECTION -->
     <div id="search-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-[#181a20] border border-[#2b313a] w-full max-w-2xl rounded-2xl flex flex-col max-h-[80vh] overflow-hidden">
-            <div class="p-4 border-b border-[#2b313a] flex items-center justify-between gap-3">
-                <input type="text" id="market-search-input" oninput="renderModalMarketList()" placeholder="ค้นหาสินทรัพย์ 100 ตัว (เช่น BTC, ETH, EUR, XAU)..." class="bg-[#0b0e11] border border-[#2b313a] rounded-xl px-4 py-2 text-white w-full text-sm focus:outline-none focus:border-binance-yellow">
+        <div class="bg-binance-card border border-binance-border w-full max-w-2xl rounded-2xl flex flex-col max-h-[80vh] overflow-hidden">
+            <div class="p-4 border-b border-binance-border flex items-center justify-between gap-3">
+                <input type="text" id="market-search-input" oninput="renderModalMarketList()" placeholder="ค้นหาสินทรัพย์ 100+ ตัว (เช่น BTC, ETH, EUR, XAU, TSLA)..." class="bg-binance-bg border border-binance-border rounded-xl px-4 py-2 text-white w-full text-sm focus:outline-none focus:border-binance-yellow">
                 <button onclick="closeSearchModal()" class="text-gray-400 hover:text-white text-2xl font-bold px-2">&times;</button>
             </div>
             <div id="modal-market-list" class="flex-1 overflow-y-auto p-3 grid grid-cols-1 md:grid-cols-2 gap-2"></div>
         </div>
     </div>
 
-    <!-- MAIN SCRIPT -->
+    <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
         const API_URL = 'https://nexus-backend-api-laj3.onrender.com/api';
         let authToken = localStorage.getItem('nexus_jwt');
         let authMode = 'LOGIN';
-        let contactType = 'EMAIL'; // EMAIL or PHONE
+        let contactType = 'EMAIL';
+        let currentLang = 'TH';
+        let currentTheme = 'DARK';
+        
         let currentAccountType = 'DEMO';
         let demoBalance = parseFloat(localStorage.getItem('nexus_demo_balance') || '100000');
         let realBalance = 0.00;
@@ -248,6 +327,7 @@
         let resendTimerInterval = null;
         let aiBotInterval = null;
         let aiBotActive = false;
+        let realtimeLoopInterval = null;
 
         const MARKET_LIST = generate100Markets();
         let currentAsset = MARKET_LIST[0];
@@ -255,38 +335,100 @@
         let chart, candleSeries, lastPrice = 65000;
         let activePositions = [];
 
+        // i18n Dictionary
+        const I18N = {
+            TH: {
+                auth_subtitle: "แพลตฟอร์มการเทรดอัจฉริยะ Multi-Asset AI",
+                tab_login: "เข้าสู่ระบบ", tab_register: "ลงทะเบียน",
+                btn_email: "อีเมล", btn_phone: "เบอร์โทรศัพท์ (SMS)",
+                lbl_fullname: "ชื่อ-นามสกุล (ตามเอกสาร)", lbl_contact_email: "อีเมลผู้ใช้งาน",
+                lbl_password: "รหัสผ่าน", btn_submit_login: "เข้าสู่ระบบความปลอดภัย",
+                otp_title: "ยืนยันรหัสความปลอดภัย OTP", btn_back: "← ย้อนกลับแก้ไข",
+                btn_resend: "ขอรหัส OTP อีกครั้ง", btn_verify_otp: "ยืนยันตัวตนและเข้าสู่ระบบ",
+                lbl_acc_demo: "บัญชีทดลอง", lbl_orderbook: "Order Book (สมุดคำสั่ง)",
+                lbl_ai_analysis: "สแกนการวิเคราะห์ AI:", lbl_market_trades: "Market Trades (การเทรดล่าสุด)",
+                ai_bot_desc: "วิเคราะห์สัญญาณและส่งคำสั่งเทรดอัตโนมัติด้วยความเร็วสูง",
+                lbl_amount: "จำนวนเงิน ($)", btn_submit_order: "ส่งคำสั่งซื้อขายด้วยตนเอง",
+                lbl_open_orders: "ออเดอร์ที่เปิดอยู่"
+            },
+            EN: {
+                auth_subtitle: "Smart Multi-Asset AI Trading Platform",
+                tab_login: "Log In", tab_register: "Register",
+                btn_email: "Email", btn_phone: "Phone (SMS)",
+                lbl_fullname: "Full Name (as ID)", lbl_contact_email: "User Email",
+                lbl_password: "Password", btn_submit_login: "Secure Log In",
+                otp_title: "Verify Security OTP Code", btn_back: "← Back to Edit",
+                btn_resend: "Resend OTP Code", btn_verify_otp: "Verify and Sign In",
+                lbl_acc_demo: "Demo Account", lbl_orderbook: "Live Order Book",
+                lbl_ai_analysis: "AI Scan Analysis:", lbl_market_trades: "Recent Market Trades",
+                ai_bot_desc: "High-frequency automated trading execution engine",
+                lbl_amount: "Amount ($)", btn_submit_order: "Execute Manual Order",
+                lbl_open_orders: "Active Positions"
+            }
+        };
+
         function generate100Markets() {
             const list = [];
             const cryptos = ['BTC','ETH','SOL','XRP','ADA','DOGE','AVAX','DOT','LINK','MATIC','BNB','SHIB','LTC','UNI','NEAR','ATOM','APT','FIL','ARB','OP','SUI','INJ','RNDR','TIA','FET','PEPE','WIF','FLOKI','STX','AAVE'];
-            cryptos.forEach(c => list.push({ symbol: `${c}/USD`, name: `${c} Crypto Token`, basePrice: Math.random() * 2000 + 10 }));
+            cryptos.forEach(c => list.push({ symbol: `${c}/USD`, name: `${c} Crypto Token`, basePrice: Math.random() * 2000 + 10, vol: '2.4B' }));
             
             const forexs = ['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','USD/CHF','NZD/USD','EUR/GBP','EUR/JPY','GBP/JPY','AUD/JPY','EUR/AUD','USD/THB','EUR/THB','USD/SGD'];
-            forexs.forEach(f => list.push({ symbol: f, name: `Forex Pair ${f}`, basePrice: Math.random() * 2 + 0.8 }));
+            forexs.forEach(f => list.push({ symbol: f, name: `Forex Pair ${f}`, basePrice: Math.random() * 2 + 0.8, vol: '850M' }));
 
             const commodities = ['XAU/USD','XAG/USD','USOIL','UKOIL','NGAS','COPPER','PLATINUM'];
-            commodities.forEach(c => list.push({ symbol: c, name: `Commodity ${c}`, basePrice: Math.random() * 1000 + 20 }));
+            commodities.forEach(c => list.push({ symbol: c, name: `Commodity ${c}`, basePrice: Math.random() * 1000 + 20, vol: '1.2B' }));
 
             const stocks = ['AAPL','TSLA','NVDA','MSFT','AMZN','GOOGL','META','NFLX','AMD','INTC','US30','US500','NAS100'];
-            stocks.forEach(s => list.push({ symbol: s, name: `Stock/Index ${s}`, basePrice: Math.random() * 500 + 50 }));
+            stocks.forEach(s => list.push({ symbol: s, name: `Stock/Index ${s}`, basePrice: Math.random() * 500 + 50, vol: '600M' }));
 
-            list[0] = { symbol: 'BTC/USD', name: 'Bitcoin', basePrice: 65000 };
+            list[0] = { symbol: 'BTC/USD', name: 'Bitcoin', basePrice: 65000, vol: '14.8B' };
             return list;
         }
 
-        // Auth UI Handlers
+        // Language & Theme Handlers
+        function toggleLang() {
+            currentLang = currentLang === 'TH' ? 'EN' : 'TH';
+            document.getElementById('auth-lang-btn').innerText = currentLang;
+            document.getElementById('app-lang-btn').innerText = currentLang;
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (I18N[currentLang][key]) el.innerText = I18N[currentLang][key];
+            });
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'DARK' ? 'LIGHT' : 'DARK';
+            const root = document.getElementById('html-root');
+            if (currentTheme === 'LIGHT') {
+                root.classList.remove('dark');
+            } else {
+                root.classList.add('dark');
+            }
+            if (chart) {
+                chart.applyOptions({
+                    layout: {
+                        background: { color: currentTheme === 'DARK' ? '#0b0e11' : '#ffffff' },
+                        textColor: currentTheme === 'DARK' ? '#848e9c' : '#222222'
+                    }
+                });
+            }
+        }
+
+        // Auth & OTP Handlers
         function switchAuthMode(mode) {
             authMode = mode;
             document.getElementById('input-group-name').classList.toggle('hidden', mode === 'LOGIN');
-            document.getElementById('btn-auth-submit').innerText = mode === 'LOGIN' ? 'เข้าสู่ระบบความปลอดภัย' : 'สร้างบัญชีผู้ใช้ใหม่';
+            document.getElementById('btn-auth-submit').innerText = mode === 'LOGIN' ? I18N[currentLang].btn_submit_login : I18N[currentLang].tab_register;
             document.getElementById('tab-btn-login').className = mode === 'LOGIN' ? 'flex-1 pb-3 text-binance-yellow border-b-2 border-binance-yellow transition' : 'flex-1 pb-3 text-gray-400 transition';
             document.getElementById('tab-btn-register').className = mode === 'REGISTER' ? 'flex-1 pb-3 text-binance-yellow border-b-2 border-binance-yellow transition' : 'flex-1 pb-3 text-gray-400 transition';
         }
 
         function setContactType(type) {
             contactType = type;
-            document.getElementById('btn-type-email').className = type === 'EMAIL' ? 'flex-1 py-1 rounded bg-[#2b313a] text-white font-medium' : 'flex-1 py-1 rounded text-gray-400 font-medium';
-            document.getElementById('btn-type-phone').className = type === 'PHONE' ? 'flex-1 py-1 rounded bg-[#2b313a] text-white font-medium' : 'flex-1 py-1 rounded text-gray-400 font-medium';
-            document.getElementById('lbl-contact').innerText = type === 'EMAIL' ? 'อีเมลผู้ใช้งาน' : 'เบอร์โทรศัพท์ (พร้อมรหัสประเทศ)';
+            document.getElementById('btn-type-email').className = type === 'EMAIL' ? 'flex-1 py-1 rounded bg-binance-border text-white font-medium' : 'flex-1 py-1 rounded text-gray-400 font-medium';
+            document.getElementById('btn-type-phone').className = type === 'PHONE' ? 'flex-1 py-1 rounded bg-binance-border text-white font-medium' : 'flex-1 py-1 rounded text-gray-400 font-medium';
+            document.getElementById('lbl-contact').innerText = type === 'EMAIL' ? I18N[currentLang].lbl_contact_email : I18N[currentLang].btn_phone;
             document.getElementById('auth-contact').placeholder = type === 'EMAIL' ? 'name@domain.com' : '+66812345678';
         }
 
@@ -296,11 +438,10 @@
             const password = document.getElementById('auth-password').value;
 
             if (authMode === 'REGISTER') {
-                // Show OTP Verification Screen without locking UI
                 document.getElementById('form-auth').classList.add('hidden');
                 document.getElementById('auth-tabs').classList.add('hidden');
                 document.getElementById('form-otp').classList.remove('hidden');
-                document.getElementById('otp-destination-text').innerText = `รหัส OTP ถูกส่งไปยัง ${contact} แล้ว`;
+                document.getElementById('otp-destination-text').innerText = `OTP code sent to ${contact}`;
                 startResendTimer();
                 return;
             }
@@ -312,13 +453,13 @@
                     body: JSON.stringify({ email: contact, password })
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'การเข้าสู่ระบบล้มเหลว');
+                if (!res.ok) throw new Error(data.error || 'Login failed');
 
                 authToken = data.token;
                 localStorage.setItem('nexus_jwt', authToken);
                 enterDashboard();
             } catch (err) {
-                alert('เกิดข้อผิดพลาด: ' + err.message);
+                alert('Authentication: ' + err.message);
             }
         }
 
@@ -347,13 +488,13 @@
         }
 
         function resendOTP() {
-            alert('ส่งรหัส OTP ใหม่อีกครั้งเรียบร้อยแล้ว!');
+            alert('A new OTP has been dispatched to your device.');
             startResendTimer();
         }
 
         async function handleOtpSubmit() {
             const otp = document.getElementById('otp-code').value;
-            if (otp.length < 6) return alert('กรุณากรอกรหัส OTP ให้ครบ 6 หลัก');
+            if (otp.length < 6) return alert('Enter full 6-digit OTP');
 
             const contact = document.getElementById('auth-contact').value;
             const password = document.getElementById('auth-password').value;
@@ -366,12 +507,12 @@
                     body: JSON.stringify({ email: contact, password, fullName })
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'สมัครสมาชิกล้มเหลว');
+                if (!res.ok) throw new Error(data.error || 'Registration failed');
 
-                alert('ยืนยันตัวตน OTP สำเร็จ!');
+                alert('OTP Verified Successfully!');
                 location.reload();
             } catch (err) {
-                alert('ข้อผิดพลาด: ' + err.message);
+                alert('OTP Error: ' + err.message);
             }
         }
 
@@ -380,6 +521,8 @@
             document.getElementById('view-app').classList.remove('hidden');
             initChart();
             updateBalanceDisplay();
+            startHighFrequencyRealtimeEngine();
+            renderMarketCards();
         }
 
         function logout() {
@@ -387,12 +530,82 @@
             location.reload();
         }
 
-        // Account & Balance Switcher
+        // Real-time Low Latency Ticker Loop (150ms Refresh Rate)
+        function startHighFrequencyRealtimeEngine() {
+            clearInterval(realtimeLoopInterval);
+            realtimeLoopInterval = setInterval(() => {
+                // Fluctuate last price
+                const delta = (Math.random() - 0.49) * (lastPrice * 0.001);
+                lastPrice += delta;
+
+                // Update Header Price Display
+                const priceEl = document.getElementById('live-price');
+                priceEl.innerText = `$${lastPrice.toFixed(2)}`;
+                priceEl.className = delta >= 0 ? 'font-mono font-bold text-binance-green text-xs md:text-sm' : 'font-mono font-bold text-binance-red text-xs md:text-sm';
+                
+                document.getElementById('ob-mid-price').innerText = `$${lastPrice.toFixed(2)} ${delta >= 0 ? '▲' : '▼'}`;
+                document.getElementById('ob-mid-price').className = delta >= 0 ? 'col-span-2 xl:col-span-1 py-1 border-y border-binance-border text-center font-bold text-binance-green text-xs' : 'col-span-2 xl:col-span-1 py-1 border-y border-binance-border text-center font-bold text-binance-red text-xs';
+
+                // Update Order Book
+                renderOrderBook();
+                
+                // Add Recent Trade
+                addRecentTrade(delta >= 0 ? 'BUY' : 'SELL');
+            }, 180);
+        }
+
+        function renderOrderBook() {
+            const asksEl = document.getElementById('orderbook-asks');
+            const bidsEl = document.getElementById('orderbook-bids');
+
+            let asksHTML = '';
+            for (let i = 4; i >= 1; i--) {
+                const askPrice = (lastPrice + i * 0.8).toFixed(2);
+                const askVol = (Math.random() * 2 + 0.1).toFixed(3);
+                asksHTML += `<div class="flex justify-between text-binance-red"><span>${askPrice}</span><span>${askVol}</span></div>`;
+            }
+            asksEl.innerHTML = asksHTML;
+
+            let bidsHTML = '';
+            for (let i = 1; i <= 4; i++) {
+                const bidPrice = (lastPrice - i * 0.8).toFixed(2);
+                const bidVol = (Math.random() * 2 + 0.1).toFixed(3);
+                bidsHTML += `<div class="flex justify-between text-binance-green"><span>${bidPrice}</span><span>${bidVol}</span></div>`;
+            }
+            bidsEl.innerHTML = bidsHTML;
+        }
+
+        function addRecentTrade(side) {
+            const tradesEl = document.getElementById('market-trades-list');
+            const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const tradeRow = document.createElement('div');
+            tradeRow.className = `flex justify-between ${side === 'BUY' ? 'text-binance-green' : 'text-binance-red'}`;
+            tradeRow.innerHTML = `<span>$${lastPrice.toFixed(2)}</span><span>${(Math.random() * 1.5 + 0.05).toFixed(3)}</span><span class="text-gray-500">${timeStr}</span>`;
+
+            tradesEl.prepend(tradeRow);
+            if (tradesEl.children.length > 20) tradesEl.removeChild(tradesEl.lastChild);
+        }
+
+        function renderMarketCards() {
+            const hot = MARKET_LIST.slice(0, 3);
+            document.getElementById('card-hot').innerHTML = hot.map(m => `<div class="flex justify-between"><span>${m.symbol}</span><span class="text-binance-green">$${m.basePrice.toFixed(2)}</span></div>`).join('');
+            
+            const gainers = MARKET_LIST.slice(3, 6);
+            document.getElementById('card-gainers').innerHTML = gainers.map(m => `<div class="flex justify-between"><span>${m.symbol}</span><span class="text-binance-green">+${(Math.random()*10+2).toFixed(2)}%</span></div>`).join('');
+
+            const losers = MARKET_LIST.slice(6, 9);
+            document.getElementById('card-losers').innerHTML = losers.map(m => `<div class="flex justify-between"><span>${m.symbol}</span><span class="text-binance-red">-${(Math.random()*8+1).toFixed(2)}%</span></div>`).join('');
+
+            const vol = MARKET_LIST.slice(9, 12);
+            document.getElementById('card-volume').innerHTML = vol.map(m => `<div class="flex justify-between"><span>${m.symbol}</span><span class="text-gray-300">${m.vol}</span></div>`).join('');
+        }
+
+        // Account Switcher
         function switchAccountType(type) {
             currentAccountType = type;
             document.getElementById('btn-acc-demo').className = type === 'DEMO' ? 'px-2.5 py-1 rounded bg-binance-yellow text-black transition' : 'px-2.5 py-1 rounded text-gray-400 hover:text-white transition';
-            document.getElementById('btn-acc-real').className = type === 'REAL' ? 'px-2.5 py-1 rounded bg-emerald-500 text-black transition' : 'px-2.5 py-1 rounded text-gray-400 hover:text-white transition';
-            document.getElementById('account-type-label').innerText = type === 'DEMO' ? 'บัญชีทดลอง' : 'บัญชีจริง (Real)';
+            document.getElementById('btn-acc-real').className = type === 'REAL' ? 'px-2.5 py-1 rounded bg-binance-green text-black transition' : 'px-2.5 py-1 rounded text-gray-400 hover:text-white transition';
+            document.getElementById('account-type-label').innerText = type === 'DEMO' ? I18N[currentLang].lbl_acc_demo : 'Real Account';
             updateBalanceDisplay();
             renderPositions();
         }
@@ -402,14 +615,14 @@
             document.getElementById('user-balance').innerText = `$${bal.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
         }
 
-        // Nexus AI Auto-Trading Engine Execution
+        // Nexus AI Auto-Trading Engine
         function toggleAiBot() {
             aiBotActive = document.getElementById('ai-bot-toggle').checked;
             document.getElementById('ai-bot-stats').classList.toggle('hidden', !aiBotActive);
 
             if (aiBotActive) {
-                alert('🤖 เปิดใช้งาน Nexus AI Auto-Bot เรียบร้อยแล้ว! ระบบจะวิเคราะห์และส่งคำสั่งเทรดอัตโนมัติ');
-                aiBotInterval = setInterval(runAiEngineCycle, 4000);
+                alert('🤖 Nexus AI Auto-Bot Activated! Real-time algorithmic trading initialized.');
+                aiBotInterval = setInterval(runAiEngineCycle, 3500);
             } else {
                 clearInterval(aiBotInterval);
             }
@@ -418,63 +631,49 @@
         function runAiEngineCycle() {
             if (!aiBotActive) return;
 
-            // AI Logic: Analyze price & indicators
-            const confidence = Math.floor(Math.random() * 15 + 83); // 83% - 98%
-            const side = Math.random() > 0.45 ? 'BUY' : 'SELL';
+            const confidence = Math.floor(Math.random() * 12 + 86);
+            const side = Math.random() > 0.4 ? 'BUY' : 'SELL';
             
             document.getElementById('ai-signal-badge').innerText = `${side} SIGNAL (${confidence}% Confidence)`;
-            document.getElementById('ai-signal-badge').className = side === 'BUY' ? 'px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400' : 'px-2 py-0.5 rounded font-bold bg-rose-500/20 text-rose-400';
+            document.getElementById('ai-signal-badge').className = side === 'BUY' ? 'px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-binance-green' : 'px-2 py-0.5 rounded font-bold bg-rose-500/20 text-binance-red';
 
-            // AI Executes Trade Automatically
             const aiAmount = 500;
             if (demoBalance >= aiAmount) {
                 demoBalance -= aiAmount;
                 const posId = 'ai_' + Date.now();
                 activePositions.push({
-                    id: posId,
-                    symbol: currentAsset.symbol,
-                    side: side,
-                    amount: aiAmount,
-                    leverage: 20,
-                    entry_price: lastPrice,
-                    isAi: true
+                    id: posId, symbol: currentAsset.symbol, side, amount: aiAmount, leverage: 20, entry_price: lastPrice, isAi: true
                 });
                 
                 updateBalanceDisplay();
                 renderPositions();
 
-                // Auto Close Profit by AI after 5 seconds
                 setTimeout(() => {
-                    const winProfit = aiAmount * (Math.random() * 0.15 + 0.05); // Guaranteed AI positive edge
+                    const winProfit = aiAmount * (Math.random() * 0.18 + 0.05);
                     demoBalance += (aiAmount + winProfit);
                     activePositions = activePositions.filter(p => p.id !== posId);
                     updateBalanceDisplay();
                     renderPositions();
-                }, 5000);
+                }, 4000);
             }
         }
 
         function setSide(side) {
             currentSide = side;
-            document.getElementById('btn-side-buy').className = side === 'BUY' ? 'flex-1 py-2 rounded-lg font-bold bg-emerald-500 text-black shadow transition text-xs' : 'flex-1 py-2 rounded-lg font-bold bg-[#2b313a] text-gray-400 transition text-xs';
-            document.getElementById('btn-side-sell').className = side === 'SELL' ? 'flex-1 py-2 rounded-lg font-bold bg-rose-500 text-black shadow transition text-xs' : 'flex-1 py-2 rounded-lg font-bold bg-[#2b313a] text-gray-400 transition text-xs';
+            document.getElementById('btn-side-buy').className = side === 'BUY' ? 'flex-1 py-2 rounded font-bold bg-binance-green text-black shadow transition text-xs' : 'flex-1 py-2 rounded font-bold bg-binance-border text-gray-400 transition text-xs';
+            document.getElementById('btn-side-sell').className = side === 'SELL' ? 'flex-1 py-2 rounded font-bold bg-binance-red text-black shadow transition text-xs' : 'flex-1 py-2 rounded font-bold bg-binance-border text-gray-400 transition text-xs';
         }
 
         function executeManualTrade() {
             const amount = parseFloat(document.getElementById('order-amount').value);
             const leverage = parseInt(document.getElementById('order-leverage').value);
 
-            if (demoBalance < amount) return alert('ยอดเงินไม่เพียงพอ');
+            if (demoBalance < amount) return alert('Insufficient Balance');
             demoBalance -= amount;
             localStorage.setItem('nexus_demo_balance', demoBalance.toString());
 
             activePositions.push({
-                id: 'm_' + Date.now(),
-                symbol: currentAsset.symbol,
-                side: currentSide,
-                amount,
-                leverage,
-                entry_price: lastPrice
+                id: 'm_' + Date.now(), symbol: currentAsset.symbol, side: currentSide, amount, leverage, entry_price: lastPrice
             });
 
             updateBalanceDisplay();
@@ -496,24 +695,26 @@
             document.getElementById('pos-count').innerText = activePositions.length;
 
             if (activePositions.length === 0) {
-                listEl.innerHTML = `<div class="text-xs text-gray-500 text-center py-8">ไม่มีออเดอร์เปิดอยู่</div>`;
+                listEl.innerHTML = `<div class="text-xs text-gray-500 text-center py-6">ไม่มีออเดอร์เปิดอยู่</div>`;
                 return;
             }
 
             listEl.innerHTML = activePositions.map(pos => `
-                <div class="bg-[#0b0e11] border border-[#2b313a] p-2.5 rounded-xl text-xs space-y-1">
+                <div class="bg-binance-bg border border-binance-border p-2 rounded text-xs space-y-1">
                     <div class="flex justify-between items-center">
-                        <span class="font-bold ${pos.side === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}">${pos.side} ${pos.symbol} ${pos.isAi ? '🤖 AI' : ''}</span>
-                        <span class="bg-[#2b313a] px-1.5 py-0.5 rounded text-[10px] text-binance-yellow font-mono">${pos.leverage}x</span>
+                        <span class="font-bold ${pos.side === 'BUY' ? 'text-binance-green' : 'text-binance-red'}">${pos.side} ${pos.symbol} ${pos.isAi ? '🤖 AI' : ''}</span>
+                        <span class="bg-binance-border text-binance-yellow px-1 py-0.5 rounded text-[9px] font-mono">${pos.leverage}x</span>
                     </div>
-                    <div class="flex justify-between text-gray-400 font-mono text-[11px]">
+                    <div class="flex justify-between text-gray-400 font-mono text-[10px]">
                         <span>Entry: $${pos.entry_price.toFixed(2)}</span>
                         <span>Margin: $${pos.amount}</span>
                     </div>
-                    <button onclick="closePosition('${pos.id}')" class="w-full bg-rose-500/20 text-rose-400 border border-rose-500/30 py-1 rounded mt-1 font-bold">ปิดสถานะ</button>
+                    <button onclick="closePosition('${pos.id}')" class="w-full bg-rose-500/20 text-binance-red border border-rose-500/30 py-0.5 rounded mt-1 font-bold text-[10px]">ปิดสถานะ</button>
                 </div>
             `).join('');
         }
+
+        function setTimeframe(tf) { alert(`Timeframe updated to ${tf}`); }
 
         // Market Modal
         function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); renderModalMarketList(); }
@@ -524,12 +725,12 @@
             const filtered = MARKET_LIST.filter(m => m.symbol.toLowerCase().includes(filter) || m.name.toLowerCase().includes(filter));
 
             document.getElementById('modal-market-list').innerHTML = filtered.map(m => `
-                <button onclick="selectAsset('${m.symbol}')" class="flex items-center justify-between p-3 rounded-xl bg-[#0b0e11] hover:bg-[#2b313a] border border-[#2b313a] transition text-left">
+                <button onclick="selectAsset('${m.symbol}')" class="flex items-center justify-between p-3 rounded-xl bg-binance-bg hover:bg-binance-border border border-binance-border transition text-left">
                     <div>
                         <div class="font-bold text-white text-sm">${m.symbol}</div>
                         <div class="text-[11px] text-gray-400">${m.name}</div>
                     </div>
-                    <div class="font-mono text-xs font-bold text-binance-yellow">$${m.basePrice.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                    <div class="font-mono text-xs font-bold text-binance-yellow">$${m.basePrice.toFixed(2)}</div>
                 </button>
             `).join('');
         }
@@ -538,7 +739,7 @@
             currentAsset = MARKET_LIST.find(m => m.symbol === symbol);
             document.getElementById('current-symbol-display').innerText = currentAsset.symbol;
             lastPrice = currentAsset.basePrice;
-            document.getElementById('live-price').innerText = `$${lastPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('live-price').innerText = `$${lastPrice.toFixed(2)}`;
             closeSearchModal();
             updateChartData();
         }
