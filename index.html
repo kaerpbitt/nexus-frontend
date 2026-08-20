@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusPro Enterprise Trading Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans h-screen flex flex-col overflow-hidden">
+
+    <!-- Header Navigation -->
+    <header class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 shrink-0">
+        <div class="flex items-center space-x-4">
+            <span class="font-bold text-lg tracking-wider text-blue-500">NEXUS<span class="text-white">PRO</span></span>
+            
+            <button onclick="openSearchModal()" class="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition">
+                <span id="current-symbol-display" class="font-bold text-yellow-400">BTC/USD</span>
+                <span id="current-name-display" class="text-xs text-slate-400">Bitcoin</span>
+            </button>
+
+            <div class="hidden md:flex items-center space-x-6 text-sm">
+                <div>
+                    <span class="text-xs text-slate-500 block">ราคา Real-time</span>
+                    <span id="live-price" class="font-mono font-bold text-emerald-400">$65,000.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <div id="account-info" class="hidden flex items-center space-x-3">
+                <div class="text-right">
+                    <span id="user-display-name" class="text-xs text-slate-300 block font-bold">User</span>
+                    <span id="user-balance" class="font-mono font-bold text-blue-400">$0.00</span>
+                </div>
+                <button onclick="logout()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs px-3 py-1.5 rounded border border-rose-500/30 transition">ออกจากระบบ</button>
+            </div>
+            <button id="btn-auth-open" onclick="openAuthModal()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition">เข้าสู่ระบบ / สมัครสมาชิก</button>
+        </div>
+    </header>
+
+    <!-- Trading Dashboard -->
+    <div class="flex-1 flex overflow-hidden">
+        <main class="flex-1 bg-slate-950 relative">
+            <div id="chart-container" class="w-full h-full"></div>
+        </main>
+
+        <aside class="w-80 bg-slate-900 border-l border-slate-800 flex flex-col shrink-0">
+            <div class="p-4 border-b border-slate-800">
+                <div class="flex space-x-2 mb-4">
+                    <button id="btn-side-buy" onclick="setSide('BUY')" class="flex-1 py-2 rounded font-bold bg-emerald-600 text-white">Buy / Long</button>
+                    <button id="btn-side-sell" onclick="setSide('SELL')" class="flex-1 py-2 rounded font-bold bg-slate-800 text-slate-400">Sell / Short</button>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">จำนวนเงิน ($)</label>
+                        <input type="number" id="order-amount" value="100" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white font-mono">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">Leverage</label>
+                        <select id="order-leverage" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white font-mono">
+                            <option value="1">1x</option>
+                            <option value="10">10x</option>
+                            <option value="20">20x</option>
+                            <option value="50">50x</option>
+                            <option value="100">100x</option>
+                        </select>
+                    </div>
+                    <button onclick="executeTrade()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-bold rounded text-white transition mt-2">ส่งคำสั่งซื้อขาย</button>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <div class="p-2 bg-slate-950 text-xs font-bold text-slate-400 border-b border-slate-800">ออเดอร์ในระบบ (Verified on Server)</div>
+                <div id="positions-list" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modal Login / Register -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-6 relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">&times;</button>
+            <div class="flex space-x-4 border-b border-slate-800 mb-6">
+                <button id="tab-login" onclick="switchAuthTab('LOGIN')" class="pb-2 font-bold text-blue-500 border-b-2 border-blue-500">เข้าสู่ระบบ</button>
+                <button id="tab-register" onclick="switchAuthTab('REGISTER')" class="pb-2 font-bold text-slate-400">สมัครสมาชิก</button>
+            </div>
+
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div id="field-fullname" class="hidden">
+                    <label class="text-xs text-slate-400 block mb-1">ชื่อ-นามสกุล</label>
+                    <input type="text" id="auth-fullname" class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">อีเมล</label>
+                    <input type="email" id="auth-email" required class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">รหัสผ่าน</label>
+                    <input type="password" id="auth-password" required class="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <button type="submit" id="btn-auth-submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 font-bold rounded text-white transition">เข้าสู่ระบบ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 100 Markets -->
+    <div id="search-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-xl flex flex-col max-h-[80vh] overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <input type="text" id="market-search-input" oninput="renderModalMarketList()" placeholder="ค้นหาตลาด..." class="bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white w-full max-w-md">
+                <button onclick="closeSearchModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+            <div id="modal-market-list" class="flex-1 overflow-y-auto p-2 grid grid-cols-1 md:grid-cols-2 gap-1"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://nexus-backend-api-laj3.onrender.com/api';
+        let authToken = localStorage.getItem('nexus_jwt');
+        let currentUser = null;
+        let authMode = 'LOGIN';
+
+        const MARKET_LIST = [
+            { symbol: 'BTC/USD', wsSymbol: 'btcusdt', name: 'Bitcoin', cat: 'CRYPTO', basePrice: 65000 },
+            { symbol: 'ETH/USD', wsSymbol: 'ethusdt', name: 'Ethereum', cat: 'CRYPTO', basePrice: 3500 },
+            { symbol: 'SOL/USD', wsSymbol: 'solusdt', name: 'Solana', cat: 'CRYPTO', basePrice: 145 },
+            { symbol: 'EUR/USD', name: 'Euro / USD', cat: 'FOREX', basePrice: 1.0880 },
+            { symbol: 'XAU/USD', name: 'Gold / USD', cat: 'COMMODITIES', basePrice: 2450.00 }
+        ];
+
+        let currentAsset = MARKET_LIST[0];
+        let currentSide = 'BUY';
+        let chart, candleSeries, lastPrice = 65000;
+        let activePositions = [];
+
+        function openAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
+        function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+        function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); renderModalMarketList(); }
+        function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
+
+        function switchAuthTab(mode) {
+            authMode = mode;
+            document.getElementById('field-fullname').classList.toggle('hidden', mode === 'LOGIN');
+            document.getElementById('btn-auth-submit').innerText = mode === 'LOGIN' ? 'เข้าสู่ระบบ' : 'ลงทะเบียนสมัครสมาชิก';
+            document.getElementById('tab-login').className = mode === 'LOGIN' ? 'pb-2 font-bold text-blue-500 border-b-2 border-blue-500' : 'pb-2 font-bold text-slate-400';
+            document.getElementById('tab-register').className = mode === 'REGISTER' ? 'pb-2 font-bold text-blue-500 border-b-2 border-blue-500' : 'pb-2 font-bold text-slate-400';
+        }
+
+        function setSide(side) {
+            currentSide = side;
+            document.getElementById('btn-side-buy').className = side === 'BUY' ? 'flex-1 py-2 rounded font-bold bg-emerald-600 text-white' : 'flex-1 py-2 rounded font-bold bg-slate-800 text-slate-400';
+            document.getElementById('btn-side-sell').className = side === 'SELL' ? 'flex-1 py-2 rounded font-bold bg-rose-600 text-white' : 'flex-1 py-2 rounded font-bold bg-slate-800 text-slate-400';
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            const fullName = document.getElementById('auth-fullname').value;
+
+            const endpoint = authMode === 'LOGIN' ? '/auth/login' : '/auth/register';
+            const payload = authMode === 'LOGIN' ? { email, password } : { email, password, fullName };
+
+            try {
+                const res = await fetch(API_URL + endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error);
+
+                authToken = data.token;
+                localStorage.setItem('nexus_jwt', authToken);
+                currentUser = data.user;
+                closeAuthModal();
+                syncAccountData();
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('nexus_jwt');
+            authToken = null;
+            currentUser = null;
+            location.reload();
+        }
+
+        async function syncAccountData() {
+            if (!authToken) return;
+            try {
+                const res = await fetch(API_URL + '/user/account', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (res.status === 401 || res.status === 403) return logout();
+
+                const data = await res.json();
+                document.getElementById('account-info').classList.remove('hidden');
+                document.getElementById('btn-auth-open').classList.add('hidden');
+                document.getElementById('user-display-name').innerText = currentUser?.fullName || reqEmailUser(data);
+                document.getElementById('user-balance').innerText = `$${parseFloat(data.wallet.balance).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                
+                activePositions = data.positions;
+                renderPositions();
+            } catch (err) {
+                console.error("Account sync failed", err);
+            }
+        }
+
+        function reqEmailUser(data) {
+            return data?.user?.email || 'User Account';
+        }
+
+        async function executeTrade() {
+            if (!authToken) return openAuthModal();
+
+            const amount = parseFloat(document.getElementById('order-amount').value);
+            const leverage = parseInt(document.getElementById('order-leverage').value);
+
+            try {
+                const res = await fetch(API_URL + '/trade/order', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        symbol: currentAsset.symbol,
+                        side: currentSide,
+                        amount,
+                        leverage,
+                        currentPrice: lastPrice
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                syncAccountData();
+            } catch (err) {
+                alert("การส่งคำสั่งล้มเหลว: " + err.message);
+            }
+        }
+
+        async function closePosition(id) {
+            try {
+                const res = await fetch(API_URL + '/trade/close', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ positionId: id, closePrice: lastPrice })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+
+                syncAccountData();
+            } catch (err) {
+                alert("ปิดสถานะล้มเหลว: " + err.message);
+            }
+        }
+
+        function renderPositions() {
+            const listEl = document.getElementById('positions-list');
+            if (activePositions.length === 0) {
+                listEl.innerHTML = `<div class="text-xs text-slate-500 text-center py-8">ไม่มีออเดอร์ค้างในระบบ</div>`;
+                return;
+            }
+
+            listEl.innerHTML = activePositions.map(pos => `
+                <div class="bg-slate-950 border border-slate-800 p-2.5 rounded-lg text-xs space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold ${pos.side === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}">${pos.side} ${pos.symbol}</span>
+                        <span class="bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-400">${pos.leverage}x</span>
+                    </div>
+                    <div class="flex justify-between text-slate-400">
+                        <span>Entry: $${parseFloat(pos.entry_price).toFixed(2)}</span>
+                        <span>Amount: $${parseFloat(pos.amount).toFixed(2)}</span>
+                    </div>
+                    <button onclick="closePosition('${pos.id}')" class="w-full bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 py-1 rounded mt-1 transition">ปิดสถานะฝั่ง Server</button>
+                </div>
+            `).join('');
+        }
+
+        function renderModalMarketList() {
+            const filter = document.getElementById('market-search-input').value.toLowerCase();
+            const filtered = MARKET_LIST.filter(m => m.symbol.toLowerCase().includes(filter) || m.name.toLowerCase().includes(filter));
+            
+            document.getElementById('modal-market-list').innerHTML = filtered.map(m => `
+                <button onclick="selectAsset('${m.symbol}')" class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-800 transition text-left">
+                    <div>
+                        <div class="font-bold text-white text-sm">${m.symbol}</div>
+                        <div class="text-xs text-slate-400">${m.name}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-mono text-sm font-bold text-slate-200">$${m.basePrice.toLocaleString()}</div>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-blue-400">${m.cat}</span>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function selectAsset(symbol) {
+            currentAsset = MARKET_LIST.find(m => m.symbol === symbol);
+            document.getElementById('current-symbol-display').innerText = currentAsset.symbol;
+            document.getElementById('current-name-display').innerText = currentAsset.name;
+            lastPrice = currentAsset.basePrice;
+            document.getElementById('live-price').innerText = `$${lastPrice.toLocaleString()}`;
+            closeSearchModal();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('chart-container');
+            chart = LightweightCharts.createChart(container, {
+                layout: { backgroundColor: '#020617', textColor: '#94a3b8' },
+                grid: { vertLines: { color: '#0f172a' }, horzLines: { color: '#0f172a' } }
+            });
+            candleSeries = chart.addCandlestickSeries({ upColor: '#10b981', downColor: '#ef4444' });
+
+            // Mock Data
+            let now = Math.floor(Date.now() / 1000) - 100 * 3600;
+            let p = lastPrice;
+            let data = [];
+            for(let i=0; i<100; i++) {
+                let open = p + (Math.random() - 0.5) * 50;
+                let high = open + Math.random() * 30;
+                let low = open - Math.random() * 30;
+                let close = (high + low) / 2;
+                data.push({ time: now + i * 3600, open, high, low, close });
+                p = close;
+            }
+            candleSeries.setData(data);
+
+            if (authToken) syncAccountData();
+        });
+    </script>
+</body>
+</html>
