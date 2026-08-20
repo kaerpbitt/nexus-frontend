@@ -3,503 +3,809 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>High-Concurrency Execution Terminal</title>
+    <title>Enterprise Trading Engine & Secure Financial Platform</title>
     <style>
         :root {
-            --bg-base: #0d1117;
-            --bg-card: #161b22;
-            --bg-input: #21262d;
-            --border-color: #30363d;
-            --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
-            --accent-green: #2ea043;
-            --accent-green-hover: #3fb950;
-            --accent-red: #da3633;
-            --accent-blue: #58a6ff;
-            --accent-yellow: #d29922;
-            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            --bg-base: #0a0d14;
+            --bg-card: #131722;
+            --bg-input: #1e222d;
+            --border: #2a2e39;
+            --text-main: #d1d4dc;
+            --text-sub: #787b86;
+            --green: #089981;
+            --red: #f23645;
+            --blue: #2962ff;
+            --yellow: #f5c842;
+            --purple: #9c27b0;
+            --font-mono: 'Consolas', 'Courier New', monospace;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-base);
-            color: var(--text-primary);
-            padding: 20px;
-            font-size: 14px;
+            color: var(--text-main);
+            padding: 15px;
+            font-size: 13px;
         }
 
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 360px 1fr 400px;
-            gap: 20px;
-            max-width: 1600px;
-            margin: 0 auto;
+        /* Authentication Screen */
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(10, 13, 20, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
         }
-
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
+        .auth-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 380px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }
+        .auth-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: var(--blue); }
 
-        .card-title {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 16px;
+        /* Navigation & Topbar */
+        .navbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 15px;
         }
+        .brand { font-size: 15px; font-weight: bold; color: var(--blue); display: flex; align-items: center; gap: 8px; }
 
-        /* Metric Grid */
+        /* Dashboard Layout */
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
-        .metric-box {
-            background-color: var(--bg-input);
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
             padding: 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
+            border-radius: 8px;
         }
-        .metric-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
-        .metric-value { font-size: 18px; font-weight: 700; font-family: var(--font-mono); }
-        .metric-value.green { color: var(--accent-green-hover); }
-        .metric-value.yellow { color: var(--accent-yellow); }
-        .metric-value.blue { color: var(--accent-blue); }
+        .metric-title { font-size: 10px; color: var(--text-sub); margin-bottom: 4px; }
+        .metric-num { font-size: 16px; font-weight: bold; font-family: var(--font-mono); }
 
-        /* Form Styling */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 300px 320px 1fr 320px;
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 15px;
+        }
+        .card-header {
+            font-size: 12px;
+            font-weight: 600;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Forms & Components */
         .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+        .form-group label { display: block; font-size: 11px; color: var(--text-sub); margin-bottom: 4px; }
         .form-control {
             width: 100%;
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            border: 1px solid var(--border);
             border-radius: 6px;
-            color: var(--text-primary);
-            padding: 8px 12px;
+            color: var(--text-main);
+            padding: 8px 10px;
             font-family: var(--font-mono);
-            font-size: 13px;
+            font-size: 12px;
         }
-        .form-control:focus { outline: 1px solid var(--accent-blue); }
+        .form-control:focus { outline: 1px solid var(--blue); }
 
-        /* Buttons */
         .btn {
             width: 100%;
             padding: 10px;
             border-radius: 6px;
             border: none;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
-            margin-bottom: 8px;
+            transition: 0.15s;
+            font-size: 12px;
         }
-        .btn-green { background-color: var(--accent-green); color: #fff; }
-        .btn-green:hover { background-color: var(--accent-green-hover); }
-        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-primary); }
-        .btn-outline:hover { background-color: var(--bg-input); }
-        .btn-warning { background-color: var(--accent-yellow); color: #000; }
-        .btn-danger { background-color: var(--accent-red); color: #fff; }
+        .btn-buy { background: var(--green); color: #fff; }
+        .btn-buy:hover { background: #067a67; }
+        .btn-sell { background: var(--red); color: #fff; }
+        .btn-sell:hover { background: #c82333; }
+        .btn-blue { background: var(--blue); color: #fff; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: var(--bg-input); }
+        .btn-sm { padding: 4px 8px; font-size: 10px; width: auto; }
 
-        /* Table */
-        table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 12px; }
-        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        th { color: var(--text-secondary); font-weight: 500; }
+        .side-btn-group { display: flex; gap: 8px; margin-bottom: 12px; }
+        .side-btn {
+            flex: 1; padding: 10px; border: 1px solid var(--border);
+            background: var(--bg-input); color: var(--text-sub);
+            font-weight: bold; border-radius: 6px; cursor: pointer; text-align: center;
+        }
+        .side-btn.active-buy { background: var(--green); color: #fff; border-color: var(--green); }
+        .side-btn.active-sell { background: var(--red); color: #fff; border-color: var(--red); }
 
-        /* Terminal Console */
-        .console-output {
-            background-color: #040d21;
-            border: 1px solid var(--border-color);
+        .market-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px; border-bottom: 1px solid var(--border); cursor: pointer; border-radius: 4px;
+        }
+        .market-row:hover { background: var(--bg-input); }
+        .market-row.selected { background: rgba(41, 98, 255, 0.15); border-color: var(--blue); }
+
+        table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 11px; }
+        th, td { padding: 8px 6px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-sub); font-weight: 500; }
+
+        .terminal {
+            background: #06080d;
+            border: 1px solid var(--border);
             border-radius: 6px;
             height: 350px;
             overflow-y: auto;
-            padding: 12px;
+            padding: 10px;
             font-family: var(--font-mono);
             font-size: 11px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
-        .log-entry { margin-bottom: 6px; border-bottom: 1px dashed #1e293b; padding-bottom: 4px; }
-        .log-time { color: var(--text-secondary); }
-        .log-success { color: var(--accent-green-hover); }
-        .log-error { color: var(--accent-red); }
-        .log-info { color: var(--accent-blue); }
+        .log-line { margin-bottom: 4px; border-bottom: 1px dashed #1a202c; padding-bottom: 2px; word-break: break-all; }
+        .log-success { color: var(--green); }
+        .log-error { color: var(--red); }
+        .log-info { color: var(--blue); }
+        .log-warn { color: var(--yellow); }
 
-        .badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-        .badge-success { background: rgba(46, 160, 67, 0.2); color: var(--accent-green-hover); }
-        .badge-danger { background: rgba(218, 54, 51, 0.2); color: var(--accent-red); }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; }
+        .badge-buy { background: rgba(8, 153, 129, 0.2); color: var(--green); }
+        .badge-sell { background: rgba(242, 54, 69, 0.2); color: var(--red); }
+        .badge-admin { background: rgba(156, 39, 176, 0.2); color: var(--purple); }
 
-        .flex-row { display: flex; gap: 8px; }
+        .c-green { color: var(--green); }
+        .c-red { color: var(--red); }
+        .c-yellow { color: var(--yellow); }
+        .c-blue { color: var(--blue); }
+        .c-purple { color: var(--purple); }
     </style>
 </head>
 <body>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2>Financial Execution Engine Terminal</h2>
-        <div>
-            Mode: 
-            <select id="executionMode" class="form-control" style="width: auto; display: inline-block;" onchange="toggleEngineMode()">
-                <option value="MOCK">Client Simulation Mode (Standalone)</option>
-                <option value="LIVE">Live API Mode (connect to Java Backend)</option>
-            </select>
+    <!-- AUTHENTICATION OVERLAY (LOGIN / REGISTER) -->
+    <div class="auth-overlay" id="authScreen">
+        <div class="auth-card">
+            <div class="auth-title">NEXUS SECURE AUTH PORTAL</div>
+            
+            <div class="form-group">
+                <label>Select User Account / Role</label>
+                <select id="authAccountSelect" class="form-control" onchange="toggleAuthFields()">
+                    <option value="trader1">Trader 1 (USR-101 - Regular Trader)</option>
+                    <option value="trader2">Trader 2 (USR-102 - High Volume)</option>
+                    <option value="admin">System Admin (ADMIN - Platform Owner)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="authUsername" class="form-control" value="trader1">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="authPassword" class="form-control" value="password123">
+            </div>
+
+            <button class="btn btn-blue" onclick="handleLogin()" style="margin-top: 10px;">AUTHENTICATE & ISSUE JWT</button>
+            <div id="authError" style="color: var(--red); font-size: 11px; margin-top: 10px; text-align: center;"></div>
         </div>
     </div>
 
-    <div class="metrics-grid">
-        <div class="metric-box">
-            <div class="metric-label">TOTAL EQUITY</div>
-            <div class="metric-value blue" id="displayEquity">$10,000.00</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">FREE MARGIN (AVAILABLE)</div>
-            <div class="metric-value green" id="displayFreeMargin">$10,000.00</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">LOCKED MARGIN</div>
-            <div class="metric-value yellow" id="displayLockedMargin">$0.00</div>
-        </div>
-    </div>
-
-    <div class="dashboard-grid">
+    <!-- MAIN SECURE DASHBOARD -->
+    <div id="mainDashboard" style="display: none;">
         
-        <div>
-            <div class="card">
-                <div class="card-title">1. Execution Form (Order Submit)</div>
-                <form id="orderForm" onsubmit="handleOrderSubmit(event)">
-                    <div class="form-group">
-                        <label>Account ID</label>
-                        <input type="text" id="accountId" class="form-control" value="ACC-8890" required>
+        <!-- Top Navbar -->
+        <div class="navbar">
+            <div class="brand">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                FINANCIAL EXECUTION ENGINE (AUTHENTICATED SESSION)
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div>User: <b id="lblUsername" class="c-blue">-</b> | Role: <span id="lblRole" class="badge">-</span></div>
+                <div>JWT Session: <span id="lblJwtStatus" class="c-green" style="font-family: var(--font-mono); font-size: 10px;">VALID</span></div>
+                <button class="btn btn-outline btn-sm" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">TOTAL EQUITY</div>
+                <div class="metric-num c-blue" id="valEquity">$0.00</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">FREE MARGIN</div>
+                <div class="metric-num c-green" id="valFreeMargin">$0.00</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">LOCKED MARGIN</div>
+                <div class="metric-num c-yellow" id="valLockedMargin">$0.00</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">UNREALIZED PnL</div>
+                <div class="metric-num" id="valFloatingPnL">$0.00</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">PLATFORM REVENUE (ADMIN ONLY)</div>
+                <div class="metric-num c-purple" id="valPlatformRevenue">$0.00</div>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            
+            <!-- COL 1: Live Market Watch -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        Live Market Watch
+                        <span class="badge badge-buy">WEBSOCKET LIVE</span>
                     </div>
+                    <div id="marketList"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Wallet Operations</div>
                     <div class="form-group">
-                        <label>User ID</label>
-                        <input type="text" id="userId" class="form-control" value="USR-101" required>
+                        <label>Amount ($)</label>
+                        <input type="number" id="walletAmount" class="form-control" value="1000.00" step="100">
                     </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-buy" onclick="handleDeposit()">Deposit</button>
+                        <button class="btn btn-sell" onclick="handleWithdraw()">Withdraw</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COL 2: Order Execution Entry -->
+            <div>
+                <div class="card">
+                    <div class="card-header">Order Execution Panel</div>
+                    
+                    <div class="side-btn-group">
+                        <div class="side-btn active-buy" id="btnSideBuy" onclick="setSide('BUY')">BUY / LONG</div>
+                        <div class="side-btn" id="btnSideSell" onclick="setSide('SELL')">SELL / SHORT</div>
+                    </div>
+
                     <div class="form-group">
-                        <label>Symbol</label>
-                        <select id="symbol" class="form-control">
-                            <option value="BTCUSD">BTCUSD</option>
-                            <option value="EURUSD">EURUSD</option>
-                            <option value="ETHUSD">ETHUSD</option>
+                        <label>Asset Symbol</label>
+                        <input type="text" id="orderSymbol" class="form-control" value="BTCUSD" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Execution Price ($)</label>
+                        <input type="number" id="orderPrice" class="form-control" value="65000.00" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Volume (Lots)</label>
+                        <input type="number" id="orderVolume" class="form-control" value="1.00" step="0.1" oninput="calculateMarginPreview()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Leverage Multiplier</label>
+                        <select id="orderLeverage" class="form-control" onchange="calculateMarginPreview()">
+                            <option value="1">1X</option>
+                            <option value="10">10X</option>
+                            <option value="50">50X</option>
+                            <option value="100" selected>100X</option>
                         </select>
                     </div>
-                    <div class="flex-row">
-                        <div class="form-group" style="flex: 1;">
-                            <label>Volume (Lots)</label>
-                            <input type="number" id="volume" class="form-control" value="1.00000000" step="0.01" required>
+
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 6px; margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px;">
+                        <div>Required Margin: <span id="previewMargin" class="c-yellow" style="font-weight:bold;">$650.00</span></div>
+                        <div>Est. Broker Fee: <span id="previewFee" class="c-purple" style="font-weight:bold;">$32.50</span></div>
+                    </div>
+
+                    <button class="btn btn-buy" id="btnSubmitOrder" onclick="executeOrderSubmit()">SUBMIT SIGNED ORDER</button>
+                </div>
+            </div>
+
+            <!-- COL 3: Positions & Ledger -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        Active Positions
+                        <span id="posCountBadge" class="badge badge-buy">0 Active</span>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Side</th>
+                                    <th>Entry</th>
+                                    <th>Margin</th>
+                                    <th>PnL ($)</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="positionsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Double-Entry Immutable Ledger</div>
+                    <div style="overflow-x: auto; max-height: 200px; overflow-y: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>TX ID</th>
+                                    <th>Type</th>
+                                    <th>Debit (+)</th>
+                                    <th>Credit (-)</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledgerTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COL 4: Admin Controls & Audit Terminal -->
+            <div>
+                <div class="card" id="adminPanelCard" style="border-color: var(--purple);">
+                    <div class="card-header" style="color: var(--purple);">
+                        Platform Risk Governor (RBAC Protected)
+                    </div>
+                    <div id="adminControlsArea">
+                        <div class="form-group">
+                            <label>Execution Cooldown (Seconds)</label>
+                            <input type="number" id="cfgCooldown" class="form-control" value="3" onchange="updateAdminConfig()">
                         </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label>Price ($)</label>
-                            <input type="number" id="price" class="form-control" value="50000.0000" step="0.01" required>
+                        <div class="form-group">
+                            <label>Max Positions Per User</label>
+                            <input type="number" id="cfgMaxPos" class="form-control" value="5" onchange="updateAdminConfig()">
+                        </div>
+                        <div class="form-group">
+                            <label>Broker Fee Rate (%)</label>
+                            <input type="number" id="cfgFeeRate" class="form-control" value="0.05" step="0.01" onchange="updateAdminConfig()">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>Leverage (X)</label>
-                        <input type="number" id="leverage" class="form-control" value="100.00" required>
+                    <div id="adminAccessDenied" style="display:none; color:var(--text-sub); font-size:11px; text-align:center; padding:15px;">
+                        🔒 ACCESS DENIED: Requires ROLE_ADMIN Privilege
                     </div>
-                    
-                    <div style="background: var(--bg-input); padding: 8px; border-radius: 4px; margin-bottom: 12px; font-family: var(--font-mono); font-size: 11px;">
-                        Required Margin: <span id="calcMarginText" style="color: var(--accent-yellow); font-weight: bold;">$500.00</span>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        Security Audit Log Stream
+                        <button class="btn btn-outline btn-sm" onclick="clearLogs()">Clear</button>
                     </div>
-
-                    <button type="submit" class="btn btn-green">Execute Order (POST)</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <div class="card-title">2. Stress Testing & Guardrails</div>
-                <button class="btn btn-warning" onclick="triggerCooldownTest()">Test Anti-Spam Cooldown (10s Lock)</button>
-                <button class="btn btn-danger" onclick="triggerOverMarginTest()">Test Insufficient Margin Reject</button>
-                <button class="btn btn-outline" onclick="resetState()">Reset Account Balance ($10,000)</button>
-            </div>
-        </div>
-
-        <div>
-            <div class="card">
-                <div class="card-title">
-                    Active Orders (Max Limit: <span id="maxLimitText">5</span>)
-                    <span id="activeCountBadge" class="badge badge-success">0 / 5</span>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>TX ID</th>
-                            <th>Symbol</th>
-                            <th>Volume</th>
-                            <th>Margin Locked</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ordersTableBody">
-                        <tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No active orders</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="card">
-                <div class="card-title">Immutable Double-Entry Ledger Logs</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>TX ID</th>
-                            <th>Type</th>
-                            <th>Debit (+)</th>
-                            <th>Credit (-)</th>
-                            <th>Time</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ledgerTableBody">
-                        <tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No ledger records</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div>
-            <div class="card">
-                <div class="card-title">
-                    Audit Log & API Response Stream
-                    <button class="btn btn-outline" style="width: auto; padding: 2px 8px; font-size: 11px;" onclick="clearLogs()">Clear</button>
-                </div>
-                <div class="console-output" id="consoleOutput">
-                    <div class="log-entry log-info">[SYSTEM INIT] Terminal Loaded. Execution engine ready.</div>
+                    <div class="terminal" id="terminalBox"></div>
                 </div>
             </div>
-        </div>
 
+        </div>
     </div>
 
     <script>
-        // --- STATE ENGINE ---
-        let state = {
-            totalEquity: 10000.00,
-            freeMargin: 10000.00,
-            lockedMargin: 0.00,
-            maxPositionLimit: 5,
-            lastExecutionTime: 0,
-            cooldownSeconds: 10,
-            orders: [],
-            ledgers: [],
-            mode: 'MOCK'
+        // --- SECURE IN-MEMORY DATABASE (MOCK DB BACKEND) ---
+        const DB = {
+            users: {
+                'trader1': { userId: 'USR-101', username: 'trader1', passwordHash: 'hash_password123', role: 'TRADER' },
+                'trader2': { userId: 'USR-102', username: 'trader2', passwordHash: 'hash_password123', role: 'TRADER' },
+                'admin':   { userId: 'USR-ADMIN', username: 'admin', passwordHash: 'hash_password123', role: 'ADMIN' }
+            },
+            accounts: {
+                'USR-101': { equity: 10000.00, freeMargin: 10000.00, lockedMargin: 0.00, positions: [], ledgers: [], lastExecTime: 0 },
+                'USR-102': { equity: 25000.00, freeMargin: 25000.00, lockedMargin: 0.00, positions: [], ledgers: [], lastExecTime: 0 },
+                'USR-ADMIN': { equity: 500000.00, freeMargin: 500000.00, lockedMargin: 0.00, positions: [], ledgers: [], lastExecTime: 0 }
+            },
+            platformRevenue: 0.00,
+            adminConfig: { cooldownSec: 3, maxPositions: 5, commissionRate: 0.05 }
         };
 
-        // Auto calculate margin preview on form change
-        document.querySelectorAll('#volume, #price, #leverage').forEach(input => {
-            input.addEventListener('input', updateMarginCalculationPreview);
-        });
+        const markets = {
+            'BTCUSD': { symbol: 'BTCUSD', price: 65000.00, ask: 65010.00, bid: 64990.00, spread: 20 },
+            'ETHUSD': { symbol: 'ETHUSD', price: 3500.00, ask: 3501.50, bid: 3498.50, spread: 3 },
+            'EURUSD': { symbol: 'EURUSD', price: 1.0850, ask: 1.0852, bid: 1.0848, spread: 0.0004 },
+            'XAUUSD': { symbol: 'XAUUSD', price: 2400.00, ask: 2400.80, bid: 2399.20, spread: 1.6 }
+        };
 
-        function updateMarginCalculationPreview() {
-            const vol = parseFloat(document.getElementById('volume').value) || 0;
-            const price = parseFloat(document.getElementById('price').value) || 0;
-            const lev = parseFloat(document.getElementById('leverage').value) || 1;
+        // --- AUTHENTICATION SESSION STATE ---
+        let currentSession = {
+            token: null,
+            userId: null,
+            username: null,
+            role: null
+        };
+
+        let selectedSymbol = 'BTCUSD';
+        let currentSide = 'BUY';
+
+        // --- AUTH & LOGIN ENGINE ---
+        function toggleAuthFields() {
+            const selected = document.getElementById('authAccountSelect').value;
+            document.getElementById('authUsername').value = selected;
+            document.getElementById('authPassword').value = 'password123';
+        }
+
+        function handleLogin() {
+            const un = document.getElementById('authUsername').value;
+            const pw = document.getElementById('authPassword').value;
+            const errBox = document.getElementById('authError');
+
+            const user = DB.users[un];
+            if (!user || 'hash_' + pw !== user.passwordHash) {
+                errBox.innerText = "AUTHENTICATION FAILED: Invalid Username or Password.";
+                return;
+            }
+
+            // Generate Simulated Signed JWT Token
+            const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+            const payload = btoa(JSON.stringify({ sub: user.userId, username: user.username, role: user.role, exp: Date.now() + 3600000 }));
+            const signature = "SIG_SECURE_HMAC_SHA256_VERIFIED";
             
-            // Formula: (Volume * Price) / Leverage
-            const margin = (vol * price) / lev;
-            document.getElementById('calcMarginText').innerText = '$' + margin.toFixed(2);
-        }
+            currentSession.token = `${header}.${payload}.${signature}`;
+            currentSession.userId = user.userId;
+            currentSession.username = user.username;
+            currentSession.role = user.role;
 
-        function toggleEngineMode() {
-            state.mode = document.getElementById('executionMode').value;
-            writeLog(`[SYSTEM] Switched execution mode to: ${state.mode}`, 'log-info');
-        }
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainDashboard').style.display = 'block';
 
-        // --- ORDER SUBMISSION HANDLER ---
-        async function handleOrderSubmit(e) {
-            e.preventDefault();
+            document.getElementById('lblUsername').innerText = currentSession.username;
+            const roleLbl = document.getElementById('lblRole');
+            roleLbl.innerText = currentSession.role;
+            roleLbl.className = currentSession.role === 'ADMIN' ? 'badge badge-admin' : 'badge badge-buy';
 
-            const payload = {
-                accountId: document.getElementById('accountId').value,
-                userId: document.getElementById('userId').value,
-                symbol: document.getElementById('symbol').value,
-                volume: parseFloat(document.getElementById('volume').value),
-                price: parseFloat(document.getElementById('price').value),
-                leverage: parseFloat(document.getElementById('leverage').value),
-                maxPositionLimit: state.maxPositionLimit
-            };
-
-            if (state.mode === 'LIVE') {
-                await sendLiveRequest(payload);
+            // Apply RBAC UI Guards
+            if (currentSession.role !== 'ADMIN') {
+                document.getElementById('adminControlsArea').style.display = 'none';
+                document.getElementById('adminAccessDenied').style.display = 'block';
             } else {
-                processMockExecution(payload);
+                document.getElementById('adminControlsArea').style.display = 'block';
+                document.getElementById('adminAccessDenied').style.display = 'none';
             }
+
+            log(`[AUTH SUCCESS] Token Issued for ${currentSession.username} (${currentSession.role}). Session Active.`, 'log-success');
+            initMarketEngine();
+            renderAll();
         }
 
-        // --- MOCK FINANCIAL ENGINE (Simulating Java Spring Backend Logic) ---
-        function processMockExecution(req) {
+        function handleLogout() {
+            currentSession = { token: null, userId: null, username: null, role: null };
+            document.getElementById('mainDashboard').style.display = 'none';
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('authError').innerText = '';
+        }
+
+        // --- MIDDLEWARE AUTH GUARD ---
+        function verifyAuthToken() {
+            if (!currentSession.token || !currentSession.userId) {
+                log(`[SECURITY ALERT] Unauthorized API Request. No JWT Token Found.`, 'log-error');
+                handleLogout();
+                return false;
+            }
+            return true;
+        }
+
+        // --- MARKET WATCH ENGINE ---
+        function initMarketEngine() {
+            renderMarketWatch();
+            setInterval(() => {
+                Object.keys(markets).forEach(sym => {
+                    const m = markets[sym];
+                    const delta = (Math.random() - 0.49) * (m.price * 0.001);
+                    m.price = Math.max(0.0001, m.price + delta);
+                    m.ask = m.price + (m.spread / 2);
+                    m.bid = m.price - (m.spread / 2);
+                });
+                renderMarketWatch();
+                updateOpenPositionsPnL();
+                renderMetrics();
+                
+                document.getElementById('orderPrice').value = (currentSide === 'BUY' ? markets[selectedSymbol].ask : markets[selectedSymbol].bid).toFixed(4);
+            }, 1000);
+        }
+
+        function renderMarketWatch() {
+            const container = document.getElementById('marketList');
+            container.innerHTML = Object.keys(markets).map(sym => {
+                const m = markets[sym];
+                return `
+                    <div class="market-row ${sym === selectedSymbol ? 'selected' : ''}" onclick="selectAsset('${sym}')">
+                        <div>
+                            <div style="font-weight:bold;">${m.symbol}</div>
+                            <div style="font-size:10px; color:var(--text-sub);">Spread: ${m.spread}</div>
+                        </div>
+                        <div style="text-align:right; font-family:var(--font-mono);">
+                            <div class="c-green">$${m.ask.toFixed(sym==='EURUSD'?4:2)}</div>
+                            <div class="c-red" style="font-size:10px;">$${m.bid.toFixed(sym==='EURUSD'?4:2)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectAsset(sym) {
+            selectedSymbol = sym;
+            document.getElementById('orderSymbol').value = sym;
+            document.getElementById('orderPrice').value = (currentSide === 'BUY' ? markets[sym].ask : markets[sym].bid).toFixed(4);
+            renderMarketWatch();
+            calculateMarginPreview();
+        }
+
+        function setSide(side) {
+            currentSide = side;
+            document.getElementById('btnSideBuy').className = side === 'BUY' ? 'side-btn active-buy' : 'side-btn';
+            document.getElementById('btnSideSell').className = side === 'SELL' ? 'side-btn active-sell' : 'side-btn';
+            const submitBtn = document.getElementById('btnSubmitOrder');
+            submitBtn.className = side === 'BUY' ? 'btn btn-buy' : 'btn btn-sell';
+            submitBtn.innerText = side === 'BUY' ? 'SUBMIT BUY ORDER' : 'SUBMIT SELL ORDER';
+            selectAsset(selectedSymbol);
+        }
+
+        function calculateMarginPreview() {
+            const vol = parseFloat(document.getElementById('orderVolume').value) || 0;
+            const price = parseFloat(document.getElementById('orderPrice').value) || 0;
+            const lev = parseFloat(document.getElementById('orderLeverage').value) || 1;
+
+            const notional = vol * price;
+            const margin = notional / lev;
+            const fee = notional * (DB.adminConfig.commissionRate / 100);
+
+            document.getElementById('previewMargin').innerText = '$' + margin.toFixed(2);
+            document.getElementById('previewFee').innerText = '$' + fee.toFixed(2);
+        }
+
+        // --- TRANSACTION EXECUTION ENGINE ---
+        function executeOrderSubmit() {
+            if (!verifyAuthToken()) return;
+
+            const acc = DB.accounts[currentSession.userId];
             const now = Date.now();
-            writeLog(`[REQUEST] POST /api/v1/orders/execute -> Account: ${req.accountId}`, 'log-info');
 
-            // 1. Anti-Spam Execution Cooldown Check (10s)
-            const timeDiff = (now - state.lastExecutionTime) / 1000;
-            if (timeDiff < state.cooldownSeconds) {
-                const remaining = (state.cooldownSeconds - timeDiff).toFixed(1);
-                writeLog(`[REJECT 429] RateLimitExceededException: Execution Cooldown active. Wait ${remaining}s`, 'log-error');
+            const vol = parseFloat(document.getElementById('orderVolume').value);
+            const lev = parseFloat(document.getElementById('orderLeverage').value);
+            const price = currentSide === 'BUY' ? markets[selectedSymbol].ask : markets[selectedSymbol].bid;
+            
+            const notional = vol * price;
+            const requiredMargin = parseFloat((notional / lev).toFixed(2));
+            const fee = parseFloat((notional * (DB.adminConfig.commissionRate / 100)).toFixed(2));
+            const totalDeductionNeeded = requiredMargin + fee;
+
+            // 1. Cooldown Security Check
+            const timeDiff = (now - acc.lastExecTime) / 1000;
+            if (timeDiff < DB.adminConfig.cooldownSec) {
+                log(`[REJECT 429] RateLimitExceeded: Cooldown active. Wait ${(DB.adminConfig.cooldownSec - timeDiff).toFixed(1)}s`, 'log-error');
                 return;
             }
 
-            // 2. Max Active Position Check
-            if (state.orders.length >= state.maxPositionLimit) {
-                writeLog(`[REJECT 400] RiskPolicyViolationException: Max position limit reached (${state.maxPositionLimit})`, 'log-error');
+            // 2. Max Position Risk Check
+            if (acc.positions.length >= DB.adminConfig.maxPositions) {
+                log(`[REJECT 400] PolicyViolation: Max limit (${DB.adminConfig.maxPositions}) reached.`, 'log-error');
                 return;
             }
 
-            // 3. Exact Precision Calculation
-            const requiredMargin = parseFloat(((req.volume * req.price) / req.leverage).toFixed(2));
-
-            // 4. Free Margin Check
-            if (state.freeMargin < requiredMargin) {
-                writeLog(`[REJECT 400] InsufficientMarginException: Required $${requiredMargin.toFixed(2)}, Available $${state.freeMargin.toFixed(2)}`, 'log-error');
+            // 3. Free Margin Guard Check
+            if (acc.freeMargin < totalDeductionNeeded) {
+                log(`[REJECT 400] InsufficientMargin: Need $${totalDeductionNeeded.toFixed(2)}, Free: $${acc.freeMargin.toFixed(2)}`, 'log-error');
                 return;
             }
 
-            // --- STATE MUTATION & LEDGER LOCK ---
-            state.lastExecutionTime = now;
-            state.freeMargin -= requiredMargin;
-            state.lockedMargin += requiredMargin;
+            // --- ATOMIC STATE UPDATE ---
+            acc.lastExecTime = now;
+            acc.freeMargin -= totalDeductionNeeded;
+            acc.lockedMargin += requiredMargin;
+            DB.platformRevenue += fee;
 
             const txId = 'TX-' + Math.random().toString(36).substring(2, 9).toUpperCase();
 
-            // Store Order
-            const newOrder = {
-                orderId: txId,
-                symbol: req.symbol,
-                volume: req.volume.toFixed(8),
-                requiredMargin: requiredMargin.toFixed(2),
-                status: 'MARGIN_LOCKED'
-            };
-            state.orders.push(newOrder);
+            acc.positions.push({
+                id: txId, symbol: selectedSymbol, side: currentSide, volume: vol,
+                entryPrice: price, currentPrice: price, margin: requiredMargin, fee: fee, pnl: 0.00
+            });
 
-            // Double Entry Ledger Recording
-            const newLedger = {
-                txId: txId,
-                type: 'MARGIN_LOCK',
-                debit: requiredMargin.toFixed(2),
-                credit: requiredMargin.toFixed(2),
-                time: new Date().toLocaleTimeString()
-            };
-            state.ledgers.unshift(newLedger);
+            acc.ledgers.unshift({
+                txId: txId, type: 'MARGIN_LOCK', debit: requiredMargin.toFixed(2), credit: requiredMargin.toFixed(2), time: new Date().toLocaleTimeString()
+            });
 
-            // Update UI
-            renderAll();
-            writeLog(`[SUCCESS 200] Transaction ${txId} committed. Locked Margin: $${requiredMargin.toFixed(2)}`, 'log-success');
-        }
-
-        // --- LIVE API REQUEST HANDLER ---
-        async function sendLiveRequest(payload) {
-            try {
-                writeLog(`[HTTP POST] Sending to http://localhost:8080/api/v1/orders/execute...`, 'log-info');
-                const response = await fetch('http://localhost:8080/api/v1/orders/execute', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+            if (fee > 0) {
+                acc.ledgers.unshift({
+                    txId: txId, type: 'FEE_DEDUCTION', debit: '0.00', credit: fee.toFixed(2), time: new Date().toLocaleTimeString()
                 });
-
-                const result = await response.json();
-                if (response.ok) {
-                    writeLog(`[SUCCESS 200] TX: ${result.transactionId} | Remaining Free Margin: $${result.remainingFreeMargin}`, 'log-success');
-                    state.freeMargin = result.remainingFreeMargin;
-                    state.lockedMargin = result.currentLockedMargin;
-                    renderAll();
-                } else {
-                    writeLog(`[ERROR ${response.status}] ${result.errorCode}: ${result.message}`, 'log-error');
-                }
-            } catch (err) {
-                writeLog(`[NETWORK ERROR] Failed to connect to Backend API: ${err.message}`, 'log-error');
             }
-        }
 
-        // --- STRESS TEST SIMULATORS ---
-        function triggerCooldownTest() {
-            writeLog(`[STRESS TEST] Firing 2 instant back-to-back requests...`, 'log-info');
-            const payload = { accountId: "ACC-8890", userId: "USR-101", symbol: "BTCUSD", volume: 0.1, price: 50000, leverage: 100 };
-            processMockExecution(payload);
-            processMockExecution(payload); // Will be caught by cooldown
-        }
-
-        function triggerOverMarginTest() {
-            writeLog(`[STRESS TEST] Sending huge order exceeding Free Margin...`, 'log-info');
-            const payload = { accountId: "ACC-8890", userId: "USR-101", symbol: "BTCUSD", volume: 100.0, price: 50000, leverage: 1 };
-            processMockExecution(payload);
-        }
-
-        function resetState() {
-            state.totalEquity = 10000.00;
-            state.freeMargin = 10000.00;
-            state.lockedMargin = 0.00;
-            state.lastExecutionTime = 0;
-            state.orders = [];
-            state.ledgers = [];
+            log(`[EXECUTE SUCCESS] Order ${txId} Committed by ${currentSession.username}. Margin Locked: $${requiredMargin.toFixed(2)}`, 'log-success');
             renderAll();
-            writeLog(`[SYSTEM RESET] Account state reset to initial $10,000.00`, 'log-info');
         }
 
-        // --- UI RENDERING FUNCTIONS ---
-        function renderAll() {
-            document.getElementById('displayEquity').innerText = '$' + state.totalEquity.toFixed(2);
-            document.getElementById('displayFreeMargin').innerText = '$' + state.freeMargin.toFixed(2);
-            document.getElementById('displayLockedMargin').innerText = '$' + state.lockedMargin.toFixed(2);
+        function closePosition(txId) {
+            if (!verifyAuthToken()) return;
 
-            // Active orders badge & table
-            document.getElementById('activeCountBadge').innerText = `${state.orders.length} / ${state.maxPositionLimit}`;
-            const ordersTbody = document.getElementById('ordersTableBody');
-            if (state.orders.length === 0) {
-                ordersTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No active orders</td></tr>';
+            const acc = DB.accounts[currentSession.userId];
+            const posIdx = acc.positions.findIndex(p => p.id === txId);
+            if (posIdx === -1) return;
+
+            const pos = acc.positions[posIdx];
+            const finalPnL = pos.pnl;
+
+            acc.lockedMargin -= pos.margin;
+            acc.freeMargin += (pos.margin + finalPnL);
+            acc.equity += finalPnL;
+
+            acc.ledgers.unshift({
+                txId: txId,
+                type: finalPnL >= 0 ? 'TRADE_PROFIT' : 'TRADE_LOSS',
+                debit: finalPnL >= 0 ? finalPnL.toFixed(2) : '0.00',
+                credit: finalPnL < 0 ? Math.abs(finalPnL).toFixed(2) : '0.00',
+                time: new Date().toLocaleTimeString()
+            });
+
+            acc.positions.splice(posIdx, 1);
+            log(`[CLOSE SUCCESS] Position ${txId} Closed. Realized PnL: $${finalPnL.toFixed(2)}`, finalPnL >= 0 ? 'log-success' : 'log-error');
+            renderAll();
+        }
+
+        function updateOpenPositionsPnL() {
+            if (!currentSession.userId) return;
+            const acc = DB.accounts[currentSession.userId];
+            let totalUnrealized = 0;
+
+            acc.positions.forEach(p => {
+                const curPrice = p.side === 'BUY' ? markets[p.symbol].bid : markets[p.symbol].ask;
+                p.currentPrice = curPrice;
+                const priceDiff = p.side === 'BUY' ? (curPrice - p.entryPrice) : (p.entryPrice - curPrice);
+                p.pnl = priceDiff * p.volume * (p.symbol === 'EURUSD' ? 100000 : 1);
+                totalUnrealized += p.pnl;
+            });
+
+            acc.equity = acc.freeMargin + acc.lockedMargin + totalUnrealized;
+        }
+
+        // --- WALLET OPERATIONS ---
+        function handleDeposit() {
+            if (!verifyAuthToken()) return;
+            const amt = parseFloat(document.getElementById('walletAmount').value);
+            if (!amt || amt <= 0) return;
+
+            const acc = DB.accounts[currentSession.userId];
+            acc.equity += amt;
+            acc.freeMargin += amt;
+
+            acc.ledgers.unshift({
+                txId: 'DEP-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
+                type: 'DEPOSIT', debit: amt.toFixed(2), credit: '0.00', time: new Date().toLocaleTimeString()
+            });
+
+            log(`[WALLET] Deposited $${amt.toFixed(2)} into Account`, 'log-success');
+            renderAll();
+        }
+
+        function handleWithdraw() {
+            if (!verifyAuthToken()) return;
+            const amt = parseFloat(document.getElementById('walletAmount').value);
+            if (!amt || amt <= 0) return;
+
+            const acc = DB.accounts[currentSession.userId];
+            if (acc.freeMargin < amt) {
+                log(`[WALLET REJECT] Free Margin insufficient for Withdrawal.`, 'log-error');
+                return;
+            }
+
+            acc.equity -= amt;
+            acc.freeMargin -= amt;
+
+            acc.ledgers.unshift({
+                txId: 'WTH-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
+                type: 'WITHDRAWAL', debit: '0.00', credit: amt.toFixed(2), time: new Date().toLocaleTimeString()
+            });
+
+            log(`[WALLET] Withdrew $${amt.toFixed(2)} from Account`, 'log-warn');
+            renderAll();
+        }
+
+        // --- RBAC ADMIN CONFIG ---
+        function updateAdminConfig() {
+            if (currentSession.role !== 'ADMIN') {
+                log(`[SECURITY REJECT 403] Forbidden: Requires ROLE_ADMIN.`, 'log-error');
+                return;
+            }
+
+            DB.adminConfig.cooldownSec = parseFloat(document.getElementById('cfgCooldown').value) || 0;
+            DB.adminConfig.maxPositions = parseInt(document.getElementById('cfgMaxPos').value) || 1;
+            DB.adminConfig.commissionRate = parseFloat(document.getElementById('cfgFeeRate').value) || 0;
+
+            log(`[ADMIN CONFIG] Rules Updated: Cooldown=${DB.adminConfig.cooldownSec}s, MaxPos=${DB.adminConfig.maxPositions}, Fee=${DB.adminConfig.commissionRate}%`, 'log-warn');
+            renderAll();
+        }
+
+        // --- RENDER ENGINE ---
+        function renderAll() {
+            if (!currentSession.userId) return;
+            const acc = DB.accounts[currentSession.userId];
+
+            let floatingPnL = 0;
+            acc.positions.forEach(p => floatingPnL += p.pnl);
+
+            document.getElementById('valEquity').innerText = '$' + acc.equity.toFixed(2);
+            document.getElementById('valFreeMargin').innerText = '$' + acc.freeMargin.toFixed(2);
+            document.getElementById('valLockedMargin').innerText = '$' + acc.lockedMargin.toFixed(2);
+
+            const pnlEl = document.getElementById('valFloatingPnL');
+            pnlEl.innerText = (floatingPnL >= 0 ? '+$' : '-$') + Math.abs(floatingPnL).toFixed(2);
+            pnlEl.className = 'metric-num ' + (floatingPnL >= 0 ? 'c-green' : 'c-red');
+
+            document.getElementById('valPlatformRevenue').innerText = '$' + DB.platformRevenue.toFixed(2);
+            document.getElementById('posCountBadge').innerText = `${acc.positions.length} Active`;
+
+            // Render Active Positions
+            const posTbody = document.getElementById('positionsTable');
+            if (acc.positions.length === 0) {
+                posTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-sub);">No active positions</td></tr>';
             } else {
-                ordersTbody.innerHTML = state.orders.map(o => `
+                posTbody.innerHTML = acc.positions.map(p => `
                     <tr>
-                        <td>${o.orderId}</td>
-                        <td>${o.symbol}</td>
-                        <td>${o.volume}</td>
-                        <td style="color: var(--accent-yellow);">$${o.requiredMargin}</td>
-                        <td><span class="badge badge-success">${o.status}</span></td>
+                        <td><b>${p.symbol}</b></td>
+                        <td><span class="badge ${p.side==='BUY'?'badge-buy':'badge-sell'}">${p.side}</span></td>
+                        <td>$${p.entryPrice.toFixed(2)}</td>
+                        <td>$${p.margin.toFixed(2)}</td>
+                        <td class="${p.pnl>=0?'c-green':'c-red'}">${p.pnl>=0?'+':''}$${p.pnl.toFixed(2)}</td>
+                        <td><button class="btn btn-sell btn-sm" onclick="closePosition('${p.id}')">CLOSE</button></td>
                     </tr>
                 `).join('');
             }
 
-            // Ledger Table
-            const ledgerTbody = document.getElementById('ledgerTableBody');
-            if (state.ledgers.length === 0) {
-                ledgerTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No ledger records</td></tr>';
+            // Render Ledger
+            const ledgerTbody = document.getElementById('ledgerTable');
+            if (acc.ledgers.length === 0) {
+                ledgerTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-sub);">No ledger records</td></tr>';
             } else {
-                ledgerTbody.innerHTML = state.ledgers.map(l => `
+                ledgerTbody.innerHTML = acc.ledgers.map(l => `
                     <tr>
                         <td>${l.txId}</td>
-                        <td><span class="badge badge-success">${l.type}</span></td>
-                        <td>+$${l.debit}</td>
-                        <td style="color: var(--accent-red);">-$${l.credit}</td>
+                        <td><span class="badge badge-buy">${l.type}</span></td>
+                        <td class="c-green">+$${l.debit}</td>
+                        <td class="c-red">-$${l.credit}</td>
                         <td>${l.time}</td>
                     </tr>
                 `).join('');
             }
         }
 
-        function writeLog(msg, cssClass) {
-            const consoleBox = document.getElementById('consoleOutput');
-            const time = new Date().toISOString().substring(11, 19);
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${cssClass}`;
-            entry.innerText = `[${time}] ${msg}`;
-            consoleBox.appendChild(entry);
-            consoleBox.scrollTop = consoleBox.scrollHeight;
+        function log(msg, cssClass) {
+            const box = document.getElementById('terminalBox');
+            if (!box) return;
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = `log-line ${cssClass}`;
+            div.innerText = `[${time}] ${msg}`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
         }
 
         function clearLogs() {
-            document.getElementById('consoleOutput').innerHTML = '';
+            document.getElementById('terminalBox').innerHTML = '';
         }
-
-        // Init preview
-        updateMarginCalculationPreview();
     </script>
 </body>
 </html>
